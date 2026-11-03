@@ -1,44 +1,48 @@
+import { timingSafeEqual } from 'node:crypto';
 import { json, db } from '@/lib/server';
-import { stripe, periodEnd, subIdFromInvoice } from '@/lib/stripe';
 import { PAID } from '@/lib/plans';
+import { cancelSubscription } from '@/lib/asaas';
 
-// No Stripe: Desenvolvedores > Webhooks > endpoint https://SEU-SITE/api/billing/webhook
-// com os eventos invoice.paid, customer.subscription.updated e customer.subscription.deleted.
-// O segredo de assinatura (whsec_…) vai em STRIPE_WEBHOOK_SECRET.
-export async function POST(req) {
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  const sig = req.headers.get('stripe-signature');
-  if (!secret || !sig) return json({ error: 'não autorizado' }, 401);
-  const raw = await req.text();
-  let ev;
-  try { ev = stripe().webhooks.constructEvent(raw, sig, secret); } catch (e) { return json({ error: 'assinatura inválida' }, 400); }
-
-  try {
-    if (ev.type === 'invoice.paid') {
-      const subId = subIdFromInvoice(ev.data.object);
-      if (subId) await sync(await stripe().subscriptions.retrieve(subId), true);
-    }
-    if (ev.type === 'customer.subscription.updated') await sync(ev.data.object, false);
-    if (ev.type === 'customer.subscription.deleted') {
-      const sub = ev.data.object, userId = sub.metadata?.userId;
-      if (userId) await db().from('profiles').update({ stripe_subscription_id: null, stripe_status: 'canceled' }).eq('id', userId).eq('stripe_subscription_id', sub.id);
-    }
-  } catch (e) {
-    return json({ error: e.message }, 500); // o Stripe tenta de novo
-  }
-  return json({ ok: true });
+// No Asaas: Integrações > Webhooks > Novo webhook, URL https://SEU-SITE/api/billing/webhook,
+// "Token de autenticação" igual a ASAAS_WEBHOOK_TOKEN, eventos de Cobranças e de Assinaturas.
+function tokenOk(got) {
+  const want = process.env.ASAAS_WEBHOOK_TOKEN || '';
+  if (want.length < 16 || !got) return false;
+  const a = Buffer.from(got), b = Buffer.from(want);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
-async function sync(sub, pagou) {
-  const userId = sub.metadata?.userId, plan = sub.metadata?.plan;
-  if (!userId || !PAID.includes(plan)) return;
-  const upd = {
-    plan, stripe_subscription_id: sub.id, stripe_customer_id: typeof sub.customer === 'string' ? sub.customer : sub.customer?.id,
-    stripe_status: sub.cancel_at_period_end ? 'canceling' : sub.status
-  };
-  if (pagou) {
-    const end = periodEnd(sub);
-    if (end) upd.paid_until = new Date(end.getTime() + 3 * 864e5).toISOString(); // 3 dias de folga
+export async function POST(req) {
+  if (!tokenOk(req.headers.get('asaas-access-token'))) return json({ error: 'não autorizado' }, 401);
+  const ev = await req.json().catch(() => null);
+  if (!ev?.event) return json({ error: 'evento inválido' }, 400);
+
+  try {
+    const p = ev.payment, sub = ev.subscription;
+    if ((ev.event === 'PAYMENT_CONFIRMED' || ev.event === 'PAYMENT_RECEIVED') && p) {
+      // acha a pessoa pela assinatura (renovações) ou pelo link de pagamento (primeira cobrança)
+      let prof = null;
+      if (p.subscription) prof = (await db().from('profiles').select('id, asaas_link_plan, plan, asaas_subscription_id').eq('asaas_subscription_id', p.subscription).maybeSingle()).data;
+      if (!prof && p.paymentLink) prof = (await db().from('profiles').select('id, asaas_link_plan, plan, asaas_subscription_id').eq('asaas_link_id', p.paymentLink).maybeSingle()).data;
+      if (prof) {
+        const plan = prof.asaas_link_plan && PAID.includes(prof.asaas_link_plan) ? prof.asaas_link_plan : prof.plan;
+        if (PAID.includes(plan)) {
+          const upd = { plan, asaas_status: 'active', paid_until: new Date(Date.now() + 33 * 864e5).toISOString() }; // 30 dias + 3 de folga
+          if (p.subscription) upd.asaas_subscription_id = p.subscription;
+          await db().from('profiles').update(upd).eq('id', prof.id);
+          // troca de plano: encerra a assinatura anterior para não cobrar duas vezes
+          if (p.subscription && prof.asaas_subscription_id && prof.asaas_subscription_id !== p.subscription) {
+            try { await cancelSubscription(prof.asaas_subscription_id); } catch { /* já cancelada */ }
+          }
+        }
+      }
+    }
+    if ((ev.event === 'SUBSCRIPTION_DELETED' || ev.event === 'SUBSCRIPTION_INACTIVATED') && sub?.id) {
+      // o acesso segue até paid_until; só marca que não renova mais
+      await db().from('profiles').update({ asaas_status: 'canceled' }).eq('asaas_subscription_id', sub.id);
+    }
+  } catch (e) {
+    return json({ error: e.message }, 500); // o Asaas tenta de novo
   }
-  await db().from('profiles').update(upd).eq('id', userId);
+  return json({ ok: true });
 }

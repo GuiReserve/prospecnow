@@ -2,7 +2,7 @@
 
 Prospecção pelo mapa: o agente varre cidades, regiões ou países no OpenStreetMap, mostra os negócios (com telefone primeiro) em um mapa 2D/3D e prepara a mensagem de WhatsApp de cada etapa (primeiro contato, acompanhamento em 4 dias, último em mais 7).
 
-Feito com Next.js, Supabase (login e banco), MapLibre + OpenFreeMap (mapa), OpenStreetMap via Nominatim e Overpass (dados, sem chave), Anthropic (IA, opcional) e Stripe (cobrança).
+Feito com Next.js, Supabase (login e banco), MapLibre + OpenFreeMap (mapa), OpenStreetMap via Nominatim e Overpass (dados, sem chave), Anthropic (IA, opcional) e Asaas (cobrança).
 
 ## Rodar sem chaves (demonstração)
 
@@ -31,13 +31,12 @@ Se o banco foi criado antes desta mudança, rode `supabase/osm.sql` no SQL Edito
 ### 3. IA (Anthropic)
 Crie uma chave em console.anthropic.com e coloque em `ANTHROPIC_API_KEY`. Sem ela, o app funciona: o agente separa as cidades pelo texto digitado e as mensagens ficam no texto padrão.
 
-### 4. Stripe (cobrança)
-1. No painel do Stripe, deixe ligado o **modo de teste**.
-2. Em **Desenvolvedores > Chaves de API**, copie a **chave secreta** (`sk_test_…`) para `STRIPE_SECRET_KEY`. Não precisa cadastrar produtos: o ProspecNow cria os preços dos planos sozinho na primeira assinatura.
-3. Em **Desenvolvedores > Webhooks**, adicione o endpoint `https://SEU-SITE/api/billing/webhook` com os eventos `invoice.paid`, `customer.subscription.updated` e `customer.subscription.deleted`. Copie o **segredo de assinatura** (`whsec_…`) para `STRIPE_WEBHOOK_SECRET`.
-4. Para testar, pague com o cartão de teste `4242 4242 4242 4242`, qualquer data futura e qualquer CVC.
-5. Se o banco foi criado antes desta mudança, rode `supabase/stripe.sql` no SQL Editor.
-6. Para cobrar de verdade, ative a conta no Stripe e troque as chaves de teste pelas de produção.
+### 4. Asaas (cobrança)
+1. Crie a conta em https://sandbox.asaas.com (testes). Em **Integrações > Chaves de API**, gere a chave e coloque em `ASAAS_API_KEY` (só na Vercel, nunca no código). Deixe `ASAAS_ENV=sandbox`.
+2. Em **Integrações > Webhooks**, crie um webhook com URL `https://SEU-SITE/api/billing/webhook`, escolha um **token de autenticação** (mínimo 16 caracteres) e coloque o mesmo valor em `ASAAS_WEBHOOK_TOKEN`. Marque os eventos de **Cobranças** (pagamento confirmado/recebido) e de **Assinaturas**.
+3. Não precisa cadastrar produtos: o ProspecNow cria um link de pagamento mensal para cada assinatura.
+4. Rode `supabase/asaas.sql` no SQL Editor.
+5. Para cobrar de verdade, ative a conta no Asaas e use `ASAAS_ENV=production` com a chave de produção.
 
 ### 5. Vercel
 Importe o repositório, cadastre as variáveis e publique. O plano Hobby da Vercel é para uso não comercial; para vender, use o Pro.

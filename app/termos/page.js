@@ -18,7 +18,7 @@ export default function Termos() {
         <li>Não revenda nem exporte em massa os dados mostrados no app. Os dados de negócios vêm do OpenStreetMap (licença ODbL) e devem manter a atribuição.</li>
       </ul>
       <h2>Teste grátis e planos</h2>
-      <p>Novas contas têm 7 dias de teste com os limites indicados na página de planos. Os planos pagos são mensais, cobrados pelo Stripe, e renovam até você cancelar. Ao cancelar, o acesso continua até o fim do período pago. Os limites de varreduras e de mensagens pela IA reiniciam todo mês e não acumulam.</p>
+      <p>Novas contas têm 7 dias de teste com os limites indicados na página de planos. Os planos pagos são mensais, cobrados pelo Asaas, e renovam até você cancelar. Ao cancelar, o acesso continua até o fim do período pago. Os limites de varreduras e de mensagens pela IA reiniciam todo mês e não acumulam.</p>
       <h2>Responsabilidades</h2>
       <p>Os dados dos negócios vêm do OpenStreetMap, um mapa colaborativo, e podem estar incompletos ou desatualizados. Confira antes de enviar. Você é responsável pelas mensagens que envia. Podemos suspender contas que descumprirem estes termos.</p>
     </main>

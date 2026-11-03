@@ -76,7 +76,7 @@ export default function Planos() {
           );
         })}
       </div>
-      <p className={s.small}>Pagamento seguro pelo Stripe. Cancele quando quiser.</p>
+      <p className={s.small}>Pagamento seguro pelo Asaas, com cartão, PIX ou boleto. Cancele quando quiser.</p>
 
       {esc && (
         <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && setEsc(null)}>
@@ -84,7 +84,7 @@ export default function Planos() {
             <h2>Assinar o {PLANS[esc].name} · R$ {PLANS[esc].price}/mês</h2>
             {pago && me.assinaturaAtiva
               ? <p className="muted">Seu plano muda agora. O novo valor vale a partir da próxima fatura.</p>
-              : <p className="muted">Você vai para a página segura do Stripe para pagar a primeira mensalidade. O plano libera assim que o pagamento for confirmado e renova todo mês até você cancelar.</p>}
+              : <p className="muted">Você vai para a página segura do Asaas para pagar a primeira mensalidade. O plano libera assim que o pagamento for confirmado e renova todo mês até você cancelar.</p>}
             {err && <p className="err">{err}</p>}
             <div className="row"><button className="btn" disabled={busy}>{busy ? 'Aguarde…' : pago && me.assinaturaAtiva ? 'Trocar de plano' : 'Continuar para o pagamento'}</button><button type="button" className="btn ghost" onClick={() => setEsc(null)}>Voltar</button></div>
           </form>

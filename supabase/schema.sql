@@ -7,9 +7,10 @@ create table if not exists public.profiles (
   plan text not null default 'trial',            -- essencial | pro | agencia (o teste é calculado por trial_ends_at)
   trial_ends_at timestamptz not null default (now() + interval '7 days'),
   paid_until timestamptz,
-  stripe_customer_id text,
-  stripe_subscription_id text,
-  stripe_status text,
+  asaas_link_id text,
+  asaas_link_plan text,
+  asaas_subscription_id text,
+  asaas_status text,
   settings jsonb not null default '{}'::jsonb,   -- nome, link do portfólio e textos das mensagens
   created_at timestamptz not null default now()
 );
@@ -108,10 +109,13 @@ begin
 end; $$;
 revoke execute on function public.bump_usage from public, anon, authenticated;
 
--- colunas do Stripe (seguro rodar de novo)
-alter table public.profiles add column if not exists stripe_customer_id text;
-alter table public.profiles add column if not exists stripe_subscription_id text;
-alter table public.profiles add column if not exists stripe_status text;
+-- colunas do Asaas (seguro rodar de novo)
+alter table public.profiles add column if not exists asaas_link_id text;
+alter table public.profiles add column if not exists asaas_link_plan text;
+alter table public.profiles add column if not exists asaas_subscription_id text;
+alter table public.profiles add column if not exists asaas_status text;
+create index if not exists profiles_asaas_link on public.profiles (asaas_link_id);
+create index if not exists profiles_asaas_sub on public.profiles (asaas_subscription_id);
 
 -- travas de segurança
 
