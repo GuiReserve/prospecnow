@@ -129,7 +129,7 @@ export default function AppPage() {
       <div className={s.right}>
         <div className={s.planBox}>
           <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}{p.id === 'semana' ? ` · até ${new Date(acc.profile.paid_until).toLocaleDateString('pt-BR')}` : ''}</span>
-          {p.scans > 0 && <span>Varreduras {Math.min(acc.usado, p.scans)}/{p.scans}</span>}
+          {p.id === 'admin' ? <span>Varreduras ilimitadas</span> : p.scans > 0 && <span>Varreduras {Math.min(acc.usado, p.scans)}/{p.scans}</span>}
           <span>Contatos {leads.length}</span>
           <Link href="/planos" className={s.planLink}>{p.id === 'expirado' ? 'Ativar' : PAID_IDS.includes(p.id) ? 'Plano' : 'Assinar'}</Link>
         </div>

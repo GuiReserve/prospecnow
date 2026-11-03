@@ -85,7 +85,7 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
     <Modal title="Nova varredura" onClose={onClose} wide>
       {!plano && (
         <form onSubmit={planejar} style={{ display: 'grid', gap: 14 }}>
-          <p className="muted">Você ainda tem <b>{acc.plan.scans - acc.usado}</b> varredura(s) neste mês. Cada cidade usa 1 varredura, com até {MAX_SEGMENTS} segmentos.</p>
+          <p className="muted">{acc.plan.id === 'admin' ? 'Varreduras ilimitadas na sua conta admin.' : <>Você ainda tem <b>{acc.plan.scans - acc.usado}</b> varredura(s) neste mês.</>} Cada cidade usa 1 varredura, com até {MAX_SEGMENTS} segmentos.</p>
           <div className={s.grid2}>
             <div className="field"><label htmlFor="area">Onde procurar</label><input id="area" value={area} onChange={e => setArea(e.target.value)} placeholder="Ex.: Cajamar, região de Jundiaí, Portugal" required /></div>
             <div className="field"><label htmlFor="pais">País</label><select id="pais" value={pais} onChange={e => changePais(e.target.value)}>{PAISES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>

@@ -123,14 +123,14 @@ on conflict (id) do nothing;
 
 /* ---------------- planos (mesmos números de lib/plans.js) ---------------- */
 create or replace function public.plano_atual(p public.profiles) returns text language sql stable as $$
-  select case when p.paid_until > now() and p.plan in ('essencial','pro','agencia','semana') then p.plan
+  select case when p.paid_until > now() and p.plan in ('essencial','pro','agencia','semana','admin') then p.plan
               when p.trial_ends_at > now() then 'trial' else 'expirado' end
 $$;
 create or replace function public.preco_plano(plano text) returns numeric language sql immutable as $$
   select case plano when 'semana' then 10 when 'essencial' then 29 when 'pro' then 67 when 'agencia' then 147 else null end
 $$;
 create or replace function public.limite_varreduras(plano text) returns int language sql immutable as $$
-  select case plano when 'trial' then 3 when 'semana' then 5 when 'pro' then 20 when 'agencia' then 60 else 0 end
+  select case plano when 'trial' then 3 when 'semana' then 5 when 'pro' then 20 when 'agencia' then 60 when 'admin' then 100000 else 0 end
 $$;
 
 -- gasta 1 varredura (1 cidade) do mês, se o plano permitir
