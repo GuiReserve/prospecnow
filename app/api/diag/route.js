@@ -1,7 +1,7 @@
 export const maxDuration = 60;
 // Rota temporária de teste (só no preview). Será apagada.
 const Q = '[out:json][timeout:20];area(id:3600298462)->.a;(nwr["shop"="hairdresser"]["name"](area.a);nwr["amenity"="restaurant"]["name"](area.a);nwr["amenity"="fast_food"]["name"](area.a););out center 300;';
-const QJ = '[out:json][timeout:20];area(id:3600315062)->.a;(nwr["shop"="hairdresser"]["name"](area.a);nwr["amenity"="restaurant"]["name"](area.a);nwr["amenity"="fast_food"]["name"](area.a););out center 300;';
+const QJ = '[out:json][timeout:20];area["name"="Jundiaí"]["admin_level"="8"]->.a;(nwr["shop"="hairdresser"]["name"](area.a);nwr["amenity"="restaurant"]["name"](area.a);nwr["amenity"="fast_food"]["name"](area.a););out center 300;';
 async function run(name, ep, opts) {
   const t0 = Date.now();
   try {
