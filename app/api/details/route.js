@@ -1,11 +1,11 @@
-import { session, json, fail, bump, limitMsg, db, MOCK } from '@/lib/server';
+import { session, json, fail, bump, limitMsg, db, MOCK, validPlaceId } from '@/lib/server';
 import { placeDetails } from '@/lib/places';
 
 export async function POST(req) {
   const s = await session(req);
   if (s.error) return s.error;
   const { place_id, pais } = await req.json().catch(() => ({}));
-  if (!place_id) return fail('Contato inválido.');
+  if (!validPlaceId(place_id)) return fail('Contato inválido.');
   if (!(await bump(s.user.id, 'details', 1, s.plan.details))) return fail(limitMsg(s.plan, 'details'), 402);
   try {
     const d = await placeDetails(String(place_id), { lang: pais === 'PT' ? 'pt-PT' : 'pt-BR' });

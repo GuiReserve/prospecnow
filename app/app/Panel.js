@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, api } from '@/lib/client';
+import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, api, safeUrl } from '@/lib/client';
 import s from './app.module.css';
 
 const SEGC = ['#2F7FD1', '#1E9E5A', '#D98E0B', '#2E8C8C', '#4F79A8', '#6E9A34', '#C2703A', '#5C6BB8', '#3E8E6B', '#A06A2C'];
@@ -31,9 +31,9 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
 
   useEffect(() => { setMsg(base); setErr(''); setNota(r.note || ''); }, [r.id, step, info?.nome]); // eslint-disable-line
 
-  const wa = info?.digits ? `https://wa.me/${info.digits}?text=${encodeURIComponent(msg)}` : '';
-  const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&destination_place_id=${r.place_id}` : '';
-  const gm = info?.maps || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nome)}&query_place_id=${r.place_id}`;
+  const wa = /^\d{8,15}$/.test(info?.digits || '') ? `https://wa.me/${info.digits}?text=${encodeURIComponent(msg)}` : '';
+  const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&destination_place_id=${encodeURIComponent(r.place_id)}` : '';
+  const gm = safeUrl(info?.maps) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nome)}&query_place_id=${encodeURIComponent(r.place_id)}`;
 
   async function sent() {
     const c = [...(r.contacts || [])];
@@ -76,7 +76,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
   else if (sq.k === 'aguard') nxt = `${STEP[step]} em ${sq.left} dia(s), em ${sq.next.split('-').reverse().join('/')}.`;
   else if (sq.k === 'novo') nxt = 'Ainda não recebeu mensagem.';
 
-  const foto = info?.foto || r.photo_url;
+  const foto = safeUrl(info?.foto) || safeUrl(r.photo_url);
   const h = hash(r.segmento || '');
 
   return (
@@ -115,7 +115,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
           <ul className={s.info}>
             <li>{I.pin}<span>{info.endereco || r.cidade}</span></li>
             <li>{I.tel}<span>{info.telefone || 'Sem telefone no Google'}{info.celular === false ? ' · parece fixo' : ''}</span></li>
-            <li>{I.web}<span className={info.site ? '' : s.warn}>{info.site ? <a href={info.site} target="_blank" rel="noopener nofollow">{info.site.replace(/^https?:\/\//, '').slice(0, 40)}</a> : 'Sem site no Google'}</span></li>
+            <li>{I.web}<span className={info.site ? '' : s.warn}>{safeUrl(info.site) ? <a href={safeUrl(info.site)} target="_blank" rel="noopener nofollow">{info.site.replace(/^https?:\/\//, '').slice(0, 40)}</a> : 'Sem site no Google'}</span></li>
           </ul>
         </>}
 

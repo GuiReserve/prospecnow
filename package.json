@@ -10,9 +10,12 @@
   "dependencies": {
     "@googlemaps/markerclusterer": "2.6.2",
     "@supabase/supabase-js": "2.118.0",
-    "next": "15.5.27",
+    "next": "^15.5.28",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "stripe": "^23.1.0"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
   }
 }

@@ -1,4 +1,4 @@
-import { session, json, fail, bump, limitMsg, db, MOCK } from '@/lib/server';
+import { session, json, fail, bump, limitMsg, db, MOCK, validPlaceId, leadCount, MAX_LEADS } from '@/lib/server';
 import { textSearch } from '@/lib/places';
 import { MAX_SEGMENTS } from '@/lib/plans';
 
@@ -15,6 +15,8 @@ export async function POST(req) {
   if (!busca) return fail('Informe a cidade.');
   if (!segmentos.length) return fail('Escolha pelo menos um segmento.');
   if (s.plan.scans <= 0) return fail(limitMsg(s.plan, 'scans'), 402);
+  const jaTem = await leadCount(s.user.id);
+  if (jaTem >= MAX_LEADS) return fail(`Você chegou ao limite de ${MAX_LEADS} contatos. Remova alguns antes de varrer de novo.`, 400);
   if (!(await bump(s.user.id, 'scans', 1, s.plan.scans))) return fail(limitMsg(s.plan, 'scans'), 402);
 
   const lang = pais === 'PT' ? 'pt-PT' : 'pt-BR';
@@ -25,7 +27,7 @@ export async function POST(req) {
     try {
       const list = await textSearch(`${seg} em ${busca}`, { lang, region: pais });
       for (const p of list) {
-        if (seen.has(p.place_id)) continue;
+        if (seen.has(p.place_id) || !validPlaceId(p.place_id)) continue;
         seen.add(p.place_id);
         results.push({ ...p, segmento: seg, cidade, sem_site: !p.site });
       }
@@ -42,9 +44,10 @@ export async function POST(req) {
     const out = new Set((opt || []).map(o => o.place_id));
     filtered = results.filter(r => !out.has(r.place_id));
     const now = new Date().toISOString();
+    filtered = filtered.slice(0, Math.max(0, MAX_LEADS - jaTem));
     const rows = filtered.map(r => ({ user_id: s.user.id, place_id: r.place_id, segmento: r.segmento, cidade, pais, lat: r.lat, lng: r.lng, coords_at: now, sem_site: r.sem_site }));
     const { error } = await db().from('leads').upsert(rows, { onConflict: 'user_id,place_id' });
-    if (error) return fail('Não consegui salvar os contatos: ' + error.message, 500);
+    if (error) return fail('Não consegui salvar os contatos. A varredura foi registrada; tente abrir a lista de novo.', 500);
   }
   return json({ cidade, pais, total: filtered.length, semSite: filtered.filter(r => r.sem_site).length, results: filtered, erros });
 }

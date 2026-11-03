@@ -9,7 +9,7 @@ export async function POST(req) {
   if (!base) return fail('Mensagem vazia.');
   if (!(await bump(s.user.id, 'ai', 1, s.plan.ai))) return fail(limitMsg(s.plan, 'ai'), 402);
   try {
-    const texto = await writeMessage({ base, negocio: String(b.negocio || '').slice(0, 120), segmento: String(b.segmento || '').slice(0, 40), cidade: String(b.cidade || '').slice(0, 80), etapa: String(b.etapa || 'primeiro contato'), pais: b.pais });
+    const texto = await writeMessage({ base, negocio: String(b.negocio || '').slice(0, 120), segmento: String(b.segmento || '').slice(0, 40), cidade: String(b.cidade || '').slice(0, 80), etapa: String(b.etapa || 'primeiro contato').slice(0, 40), pais: b.pais });
     return json({ texto });
   } catch (e) {
     await bump(s.user.id, 'ai', -1, 1e9);
