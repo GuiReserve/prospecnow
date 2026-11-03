@@ -25,6 +25,7 @@ export default function AppPage() {
   const [modal, setModal] = useState(null);
   const [fitKey, setFitKey] = useState(0);
   const [toast, setToast] = useState('');
+  const [loadErr, setLoadErr] = useState('');
 
   const loadMe = useCallback(async () => {
     const j = await api('/api/me');
@@ -53,7 +54,7 @@ export default function AppPage() {
           // encerra a sessão daqui para o /entrar não mandar de volta para o /app (laço)
           await supabase().auth.signOut().catch(() => {});
           router.replace('/entrar?erro=' + encodeURIComponent(e.message));
-        } else setToast(e.message);
+        } else { setToast(e.message); setLoadErr(e.message || 'Não consegui carregar.'); }
       }
     })();
   }, [router, loadMe]);
@@ -92,7 +93,19 @@ export default function AppPage() {
 
   async function sair() { if (!MOCK) await supabase().auth.signOut(); router.push('/'); }
 
-  if (!me) return <div className={s.loading}>Carregando…</div>;
+  if (!me) return (
+    <div className={s.loading}>
+      {loadErr ? (
+        <div style={{ textAlign: 'center', display: 'grid', gap: 12, maxWidth: 360, padding: 16 }}>
+          <p className="err">{loadErr}</p>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn sm" onClick={() => location.reload()}>Tentar de novo</button>
+            <button className="btn ghost sm" onClick={sair}>Sair</button>
+          </div>
+        </div>
+      ) : 'Carregando…'}
+    </div>
+  );
   const p = me.plan;
   const dias = Math.max(0, Math.ceil((new Date(me.trialEndsAt) - new Date()) / 864e5));
 
