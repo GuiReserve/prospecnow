@@ -8,7 +8,7 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' data: https://fonts.gstatic.com",
   "img-src 'self' data: blob: https:",
-  "connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://overpass-api.de https://overpass.private.coffee https://maps.mail.ru data: blob:",
+  "connect-src 'self' https://tiles.openfreemap.org https://nominatim.openstreetmap.org https://overpass-api.de https://lz4.overpass-api.de https://z.overpass-api.de https://overpass.private.coffee https://overpass.kumi.systems https://maps.mail.ru data: blob:",
   "worker-src 'self' blob:",
   "frame-src 'none'",
   "object-src 'none'",
