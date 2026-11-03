@@ -83,6 +83,9 @@ create policy "leads atualiza" on public.leads for update using (auth.uid() = us
 drop policy if exists "leads apaga" on public.leads;
 create policy "leads apaga" on public.leads for delete using (auth.uid() = user_id);
 
+-- versão antiga criou esta regra com {1,300}, que o Postgres não aceita (máx. 255) e travava todo salvamento
+alter table public.leads drop constraint if exists leads_place_id_formato;
+alter table public.leads add constraint leads_place_id_formato check (place_id ~ '^[A-Za-z0-9_-]{1,200}$') not valid;
 revoke all on public.profiles, public.usage, public.leads from anon;
 revoke insert, update, delete, truncate on public.profiles, public.usage from authenticated;
 revoke insert, update, truncate on public.leads from authenticated;
