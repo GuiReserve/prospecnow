@@ -11,19 +11,13 @@ export default function Privacidade() {
       <h1>Política de privacidade</h1>
       <p>Esta política explica quais dados o ProspecNow usa e como, de acordo com a Lei Geral de Proteção de Dados (LGPD).</p>
       <h2>Dados de quem usa o ProspecNow</h2>
-      <ul>
-        <li>Nome, e-mail e senha (guardada com criptografia) para criar e acessar a conta.</li>
-        <li>Dados de pagamento, tratados pelo Asaas para cobrar a assinatura (inclui CPF/CNPJ, informado na página do Asaas). Não guardamos dados de cartão nem CPF/CNPJ.</li>
-        <li>Os contatos que você salva, a situação de cada um, suas anotações e seus textos de mensagem.</li>
-      </ul>
+      <p>O ProspecNow não tem cadastro nem servidor de dados. Os contatos que você salva, a situação de cada um, suas anotações e seus textos de mensagem ficam guardados só no seu navegador (armazenamento local). Não recebemos nem guardamos essas informações. Se você limpar os dados do navegador, elas somem; por isso há a opção de baixar uma cópia de segurança.</p>
       <h2>Dados dos negócios mostrados no mapa</h2>
-      <p>São informações públicas de empresas do OpenStreetMap (nome, endereço, telefone comercial, site, Instagram e horário), com licença aberta ODbL. Elas são usadas para contato comercial, com base no legítimo interesse, e ficam guardadas só na lista de quem fez a varredura.</p>
+      <p>São informações públicas de empresas do OpenStreetMap (nome, endereço, telefone comercial, site, Instagram e horário), com licença aberta ODbL. A busca é feita pelo seu navegador, direto nos serviços do OpenStreetMap, e é usada para contato comercial, com base no legítimo interesse.</p>
       <h2>Pedir para sair</h2>
-      <p>Se você é dono de um negócio e não quer aparecer no ProspecNow, escreva para <a href={'mailto:' + EMAIL}>{EMAIL}</a> com o nome e o endereço do negócio. Ele será bloqueado em novas varreduras.</p>
-      <h2>Seus direitos</h2>
-      <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo mesmo e-mail. Ao excluir a conta, apagamos seus contatos e anotações.</p>
+      <p>Se você é dono de um negócio e não quer receber contato, escreva para <a href={'mailto:' + EMAIL}>{EMAIL}</a>. Como os dados vêm do OpenStreetMap, você também pode corrigir ou retirar as informações do seu negócio diretamente em openstreetmap.org.</p>
       <h2>Serviços usados</h2>
-      <p>Supabase (banco de dados e login), Vercel (hospedagem), OpenFreeMap (desenho do mapa), OpenStreetMap, Nominatim e Overpass (dados de lugares), Anthropic (escrita das mensagens pela IA) e Asaas (cobrança).</p>
+      <p>Vercel (hospedagem do site), OpenFreeMap (desenho do mapa), OpenStreetMap, Nominatim e Overpass (dados de lugares). Esses serviços recebem o seu endereço de IP e o que você busca, como qualquer site acessado pelo navegador.</p>
     </main>
   );
 }

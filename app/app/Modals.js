@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { api, saveSettings, MOCK } from '@/lib/client';
-import { scanCity, planArea } from '@/lib/osm';
+import { saveSettings, exportBackup, importBackup, MAX_LEADS, listLeads } from '@/lib/client';
+import { scanCity, planArea, searchPlaces } from '@/lib/osm';
 import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS } from '@/lib/plans';
 import s from './app.module.css';
 
@@ -19,7 +19,7 @@ function Modal({ title, onClose, children, wide }) {
 }
 
 /* ---------------- Varredura com o agente ---------------- */
-export function ScanModal({ me, onClose, onResults, onUpgrade }) {
+export function ScanModal({ onClose, onResults }) {
   const [pais, setPais] = useState('BR');
   const [area, setArea] = useState('');
   const base = pais === 'PT' ? SEGMENTOS_PT : SEGMENTOS_BR;
@@ -30,14 +30,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
   const [prog, setProg] = useState(null);
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-  const left = me.plan.scans - me.usage.scans;
-
-  if (me.plan.scans === 0) return (
-    <Modal title="Varredura automática" onClose={onClose}>
-      <p className="muted">A varredura com o agente de IA está nos planos Pro e Agência. No seu plano, você pode buscar e adicionar negócios um a um.</p>
-      <div className="row" style={{ marginTop: 16 }}><button className="btn" onClick={onUpgrade}>Ver planos</button></div>
-    </Modal>
-  );
+  const left = 10; // cidades por varredura
 
   function toggle(sg) { setSegs(v => v.includes(sg) ? v.filter(x => x !== sg) : v.length >= MAX_SEGMENTS ? v : [...v, sg]); }
   function changePais(p) { setPais(p); setSegs((p === 'PT' ? SEGMENTOS_PT : SEGMENTOS_BR).slice(0, MAX_SEGMENTS)); }
@@ -46,9 +39,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
     e.preventDefault(); setErr(''); setBusy(true);
     try {
       // as cidades da região saem do OpenStreetMap, no navegador, sem IA e sem custo
-      const j = MOCK
-        ? await api('/api/scan/plan', { area: area + (pais && !area.toLowerCase().includes('portugal') && pais !== 'BR' ? ', ' + PAISES.find(p => p[0] === pais)?.[1] : '') })
-        : await planArea(area.trim().slice(0, 120), pais, Math.min(left, 10));
+      const j = await planArea(area.trim().slice(0, 120), pais, left);
       const cidades = (j.cidades || []).slice(0, left);
       setPlano({ ...j, cidades, pais: j.pais && /^[A-Z]{2}$/.test(j.pais) ? j.pais : pais });
       const m = {}; cidades.forEach((c, i) => { m[i] = i < Math.min(left, 3); }); setMarc(m);
@@ -64,14 +55,16 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
       setProg({ i, n: lista.length, cidade: lista[i].cidade, resumo: [...resumo] });
       try {
         const busca = lista[i].busca || lista[i].cidade;
-        // a busca no mapa roda aqui no navegador; o servidor só confere e salva
-        const results = MOCK ? undefined : await scanCity(busca, segs, plano.pais);
-        const j = await api('/api/scan', { busca, cidade: lista[i].cidade, pais: plano.pais, segmentos: segs, results });
-        resumo.push({ cidade: lista[i].cidade, total: j.total, comTelefone: j.comTelefone, semSite: j.semSite });
-        onResults(j.results, j.pais);
+        const vistos = new Set();
+        const results = (await scanCity(busca, segs, plano.pais))
+          .filter(p => p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && p.place_id && !vistos.has(p.place_id) && vistos.add(p.place_id))
+          .slice(0, 800)
+          .map(p => ({ ...p, segmento: segs.includes(p.segmento) ? p.segmento : segs[0], cidade: lista[i].cidade, pais: plano.pais }));
+        if (listLeads().length >= MAX_LEADS) throw new Error(`Você chegou ao limite de ${MAX_LEADS} contatos. Remova alguns antes de varrer de novo.`);
+        resumo.push({ cidade: lista[i].cidade, total: results.length, comTelefone: results.filter(r => r.digits).length, semSite: results.filter(r => !r.site).length });
+        onResults(results);
       } catch (e2) {
         resumo.push({ cidade: lista[i].cidade, erro: e2.message });
-        if (e2.status === 402) break;
       }
     }
     setProg({ i: lista.length, n: lista.length, done: true, resumo });
@@ -82,7 +75,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
     <Modal title="Nova varredura" onClose={onClose} wide>
       {!plano && (
         <form onSubmit={planejar} style={{ display: 'grid', gap: 14 }}>
-          <p className="muted">Você tem <b>{left}</b> varredura(s) neste mês. Cada cidade usa 1 varredura, com até {MAX_SEGMENTS} segmentos.</p>
+          <p className="muted">Escolha onde procurar e até {MAX_SEGMENTS} segmentos. Dá para varrer até {left} cidades de uma vez. É grátis e leva alguns segundos por cidade.</p>
           <div className={s.grid2}>
             <div className="field"><label htmlFor="area">Onde procurar</label><input id="area" value={area} onChange={e => setArea(e.target.value)} placeholder="Ex.: Cajamar, região de Jundiaí, Portugal" required /></div>
             <div className="field"><label htmlFor="pais">País</label><select id="pais" value={pais} onChange={e => changePais(e.target.value)}>{PAISES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
@@ -140,7 +133,7 @@ function cityFrom(addr) {
   m = a.match(/\d{4}-\d{3}\s+([^,]+)/); if (m) return m[1];
   const p = a.split(',').map(x => x.trim()); return p.length > 2 ? p[p.length - 2] : '';
 }
-export function AddModal({ me, onClose, onAdded }) {
+export function AddModal({ onClose, onAdded }) {
   const [q, setQ] = useState('');
   const [pais, setPais] = useState('BR');
   const [seg, setSeg] = useState('');
@@ -150,11 +143,11 @@ export function AddModal({ me, onClose, onAdded }) {
   const [added, setAdded] = useState({});
   async function buscar(e) {
     e.preventDefault(); setErr(''); setBusy(true);
-    try { const j = await api('/api/search', { q, pais }); setRes(j.results); } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
+    try { setRes(await searchPlaces(q.trim().slice(0, 120), pais)); } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   }
   async function add(p) {
     const row = { ...p, segmento: seg || 'Outros', cidade: p.cidade || cityFrom(p.endereco), pais };
-    try { await api('/api/leads', row); setAdded(a => ({ ...a, [p.place_id]: true })); onAdded(row); } catch (e2) { setErr(e2.message); }
+    try { onAdded(row); setAdded(a => ({ ...a, [p.place_id]: true })); } catch (e2) { setErr(e2.message); }
   }
   return (
     <Modal title="Adicionar negócio" onClose={onClose} wide>
@@ -185,13 +178,19 @@ export function AddModal({ me, onClose, onAdded }) {
 }
 
 /* ---------------- Configurações ---------------- */
-export function SettingsModal({ settings, onClose, onSaved }) {
+export function SettingsModal({ settings, onClose, onSaved, onImported }) {
   const [v, setV] = useState({ ...DEFAULT_SETTINGS, ...settings });
   const [ok, setOk] = useState(''); const [err, setErr] = useState('');
   async function save(e) {
     e.preventDefault(); setErr(''); setOk('');
     if (v.link && !/^https?:\/\//.test(v.link)) { setErr('O link precisa começar com https://'); return; }
-    try { await saveSettings(v); onSaved(v); setOk('Salvo.'); } catch (e2) { setErr(e2.message); }
+    try { saveSettings(v); onSaved(v); setOk('Salvo.'); } catch (e2) { setErr(e2.message); }
+  }
+  async function restaurar(e) {
+    const file = e.target.files?.[0]; e.target.value = '';
+    if (!file) return;
+    setErr(''); setOk('');
+    try { const n = await importBackup(file); onImported(); setOk(`Backup restaurado: ${n} contato(s) novo(s).`); } catch (e2) { setErr(e2.message); }
   }
   const f = (k) => ({ value: v[k], onChange: e => setV({ ...v, [k]: e.target.value }) });
   return (
@@ -209,6 +208,14 @@ export function SettingsModal({ settings, onClose, onSaved }) {
         {err && <p className="err">{err}</p>}{ok && <p className="okmsg">{ok}</p>}
         <div className="row"><button className="btn">Salvar</button><button type="button" className="btn ghost" onClick={() => setV({ ...DEFAULT_SETTINGS, meu_nome: v.meu_nome, link: v.link, servico: v.servico })}>Voltar aos textos originais</button></div>
       </form>
+      <div className={s.h} style={{ marginTop: 18, display: 'grid', gap: 8 }}>
+        <b>Cópia de segurança</b>
+        <span>Seus contatos e mensagens ficam salvos só neste navegador. Se você limpar os dados do navegador ou trocar de aparelho, eles somem. Baixe uma cópia de vez em quando.</span>
+        <div className="row">
+          <button type="button" className="btn ghost sm" onClick={exportBackup}>Baixar backup</button>
+          <label className="btn ghost sm" style={{ cursor: 'pointer' }}>Restaurar backup<input type="file" accept="application/json,.json" onChange={restaurar} style={{ display: 'none' }} /></label>
+        </div>
+      </div>
     </Modal>
   );
 }

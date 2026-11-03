@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, api, safeUrl } from '@/lib/client';
+import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, safeUrl } from '@/lib/client';
 import s from './app.module.css';
 
 const SEGC = ['#2F7FD1', '#1E9E5A', '#D98E0B', '#2E8C8C', '#4F79A8', '#6E9A34', '#C2703A', '#5C6BB8', '#3E8E6B', '#A06A2C'];
@@ -12,8 +12,7 @@ const I = {
   route: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m3 11 18-8-8 18-2-8Z" /></svg>,
   maps: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2Z" /><path d="M9 4v14M15 6v14" /></svg>,
   pin: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z" /><circle cx="12" cy="10" r="2.5" /></svg>,
-  web: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>,
-  spark: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" /></svg>
+  web: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" /></svg>
 };
 
 export default function Panel({ lead, info, settings, onClose, onChange, onRemoved, onSettings }) {
@@ -25,11 +24,9 @@ export default function Panel({ lead, info, settings, onClose, onChange, onRemov
   const nome = info?.nome || `${r.segmento || 'Negócio'} em ${r.cidade || ''}`;
   const base = fillTemplate(settings['m' + step], { nome: info?.nome || '', segmento: r.segmento, cidade: r.cidade, link: settings.link, meu_nome: settings.meu_nome, servico: settings.servico });
   const [msg, setMsg] = useState(base);
-  const [busyAi, setBusyAi] = useState(false);
-  const [err, setErr] = useState('');
   const [nota, setNota] = useState(r.note || '');
 
-  useEffect(() => { setMsg(base); setErr(''); setNota(r.note || ''); }, [r.id, step, info?.nome]); // eslint-disable-line
+  useEffect(() => { setMsg(base); setNota(r.note || ''); }, [r.id, step, info?.nome]); // eslint-disable-line
 
   const wa = /^\d{8,15}$/.test(info?.digits || '') ? `https://wa.me/${info.digits}?text=${encodeURIComponent(msg)}` : '';
   const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${Number(r.lat)},${Number(r.lng)}` : '';
@@ -53,13 +50,6 @@ export default function Panel({ lead, info, settings, onClose, onChange, onRemov
     await updateLead(r.id, patch); onChange({ ...r, ...patch });
   }
   async function saveNote() { if (nota !== r.note) { await updateLead(r.id, { note: nota }); onChange({ ...r, note: nota }); } }
-  async function ai() {
-    setBusyAi(true); setErr('');
-    try {
-      const j = await api('/api/message', { base: msg, negocio: info?.nome || '', segmento: r.segmento, cidade: r.cidade, etapa: STEP[step].toLowerCase(), pais: r.pais });
-      setMsg(j.texto);
-    } catch (e) { setErr(e.message); } finally { setBusyAi(false); }
-  }
   async function remove() {
     if (!confirm('Tirar este negócio da sua lista?')) return;
     await deleteLead(r.id); onRemoved(r.id);
@@ -119,10 +109,8 @@ export default function Panel({ lead, info, settings, onClose, onChange, onRemov
           {(!settings.meu_nome || !settings.servico) && <p className={s.cfg}>Coloque seu nome, o que você oferece e o link do seu trabalho em <button type="button" onClick={onSettings}>Mensagens</button> para a mensagem sair completa.</p>}
           <textarea value={msg} onChange={e => setMsg(e.target.value)} aria-label="Mensagem" />
           <div className="row" style={{ marginTop: 8 }}>
-            <button className="btn ghost sm" onClick={ai} disabled={busyAi}>{I.spark && <span style={{ width: 16, height: 16, display: 'inline-flex' }}>{I.spark}</span>}{busyAi ? 'Escrevendo…' : 'Melhorar com IA'}</button>
             <button className="btn ghost sm" onClick={() => setMsg(base)}>Voltar ao texto padrão</button>
           </div>
-          {err && <p className="err" style={{ marginTop: 6 }}>{err}</p>}
           {(info.digits
             ? <a className={'btn wa ' + s.send + (closed ? ' ' + s.off : '')} href={wa} target="_blank" rel="noopener" onClick={() => !closed && sent()}><span style={{ width: 20, height: 20, display: 'inline-flex' }}>{I.wa}</span>Enviar no WhatsApp</a>
             : <p className={s.h} style={{ marginTop: 10 }}>Esse negócio não tem telefone cadastrado. Use “Pesquisar” para achar o contato ou visite o local.</p>)}

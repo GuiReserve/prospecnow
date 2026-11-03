@@ -1,8 +1,7 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { api, listLeads, mergeScanIntoMock, seq, STATUS, supabase, MOCK, mockSettings, infoOf } from '@/lib/client';
+import { listLeads, addLeads, seq, STATUS, loadSettings, infoOf } from '@/lib/client';
 import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
 const hasMap = true;
@@ -11,8 +10,8 @@ import { ScanModal, AddModal, SettingsModal } from './Modals';
 import s from './app.module.css';
 
 export default function AppPage() {
-  const router = useRouter();
-  const [me, setMe] = useState(null);
+  const [ready, setReady] = useState(false);
+  const [settings, setSettings] = useState(null);
   const [leads, setLeads] = useState([]);
   const [sel, setSel] = useState(null);
   const [view, setView] = useState(hasMap ? 'mapa' : 'lista');
@@ -25,39 +24,14 @@ export default function AppPage() {
   const [modal, setModal] = useState(null);
   const [fitKey, setFitKey] = useState(0);
   const [toast, setToast] = useState('');
-  const [loadErr, setLoadErr] = useState('');
 
-  const loadMe = useCallback(async () => {
-    const j = await api('/api/me');
-    if (MOCK) { const ms = mockSettings(); if (ms) j.settings = { ...j.settings, ...ms }; }
-    setMe(j);
-  }, []);
-
+  // tudo fica salvo neste navegador: não há conta nem servidor guardando os contatos
   useEffect(() => {
-    (async () => {
-      if (!MOCK) {
-        const { data } = await supabase().auth.getSession();
-        if (!data.session) { router.replace('/entrar'); return; }
-      }
-      try {
-        try { await loadMe(); }
-        catch (e) {
-          if (e.status !== 401 || MOCK) throw e;
-          // login pode ter vencido: renova uma vez e tenta de novo
-          await supabase().auth.refreshSession().catch(() => {});
-          await loadMe();
-        }
-        setLeads(await listLeads());
-        setFitKey(k => k + 1);
-      } catch (e) {
-        if (e.status === 401) {
-          // encerra a sessão daqui para o /entrar não mandar de volta para o /app (laço)
-          await supabase().auth.signOut().catch(() => {});
-          router.replace('/entrar?erro=' + encodeURIComponent(e.message));
-        } else { setToast(e.message); setLoadErr(e.message || 'Não consegui carregar.'); }
-      }
-    })();
-  }, [router, loadMe]);
+    setSettings(loadSettings());
+    setLeads(listLeads());
+    setFitKey(k => k + 1);
+    setReady(true);
+  }, []);
 
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(''), 5000); return () => clearTimeout(t); }, [toast]);
 
@@ -87,27 +61,11 @@ export default function AppPage() {
   const pick = useCallback(l => setSel(l.id), []);
 
   function onResults(results) {
-    mergeScanIntoMock(results).then(() => listLeads()).then(l => { setLeads(l); setFitKey(k => k + 1); });
-    loadMe().catch(() => { });
+    try { const r = addLeads(results); setLeads(r.leads); setFitKey(k => k + 1); }
+    catch (e) { setToast(e.message); }
   }
 
-  async function sair() { if (!MOCK) await supabase().auth.signOut(); router.push('/'); }
-
-  if (!me) return (
-    <div className={s.loading}>
-      {loadErr ? (
-        <div style={{ textAlign: 'center', display: 'grid', gap: 12, maxWidth: 360, padding: 16 }}>
-          <p className="err">{loadErr}</p>
-          <div className="row" style={{ justifyContent: 'center' }}>
-            <button className="btn sm" onClick={() => location.reload()}>Tentar de novo</button>
-            <button className="btn ghost sm" onClick={sair}>Sair</button>
-          </div>
-        </div>
-      ) : 'Carregando…'}
-    </div>
-  );
-  const p = me.plan;
-  const dias = Math.max(0, Math.ceil((new Date(me.trialEndsAt) - new Date()) / 864e5));
+  if (!ready) return <div className={s.loading}>Carregando…</div>;
 
   return (
     <div className={s.app}>
@@ -141,16 +99,14 @@ export default function AppPage() {
 
       <div className={s.right}>
         <div className={s.planBox}>
-          <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}</span>
-          <span>Varreduras {me.usage.scans}/{p.scans}</span>
-          <span>Contatos {leads.length}</span>
-          <Link href="/planos" className={s.planLink}>{p.id === 'trial' || p.id === 'expirado' ? 'Assinar' : 'Plano'}</Link>
+          <span className={s.planName}>Seus contatos: {leads.length}</span>
+          <span>Ficam salvos neste navegador</span>
         </div>
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn sm" onClick={() => setModal('scan')}>Nova varredura</button>
           <button className="btn ghost sm" onClick={() => setModal('add')}>Adicionar negócio</button>
           <button className="btn ghost sm" onClick={() => setModal('settings')}>Mensagens</button>
-          <button className="btn ghost sm" onClick={sair}>Sair</button>
+          <Link href="/" className="btn ghost sm">Início</Link>
         </div>
         {view === 'mapa' && hasMap && (
           <div className={s.viewBtns} role="group" aria-label="Modo do mapa">
@@ -159,8 +115,6 @@ export default function AppPage() {
           </div>
         )}
       </div>
-
-      {p.id === 'expirado' && <div className={s.banner}>Seu teste acabou. Seus contatos continuam salvos. <Link href="/planos">Escolha um plano</Link> para abrir contatos e fazer varreduras.</div>}
 
       {view === 'lista' && <div className={s.listHead} />}
       {view === 'lista' && (
@@ -191,19 +145,13 @@ export default function AppPage() {
         <div className={s.firstRun}><b>Comece pela sua primeira varredura</b><span className="muted">Diga uma cidade, região ou país.</span><button className="btn sm" onClick={() => setModal('scan')}>Nova varredura</button></div>
       )}
 
-      {selLead && <Panel lead={selLead} info={infoOf(selLead)} settings={me.settings} plan={p}
+      {selLead && <Panel lead={selLead} info={infoOf(selLead)} settings={settings}
         onClose={() => setSel(null)} onChange={l => setLeads(v => v.map(x => x.id === l.id ? l : x))} onRemoved={id => { setLeads(v => v.filter(x => x.id !== id)); setSel(null); }} onSettings={() => setModal('settings')} />}
 
-      {modal === 'scan' && <ScanModal me={me} onClose={() => setModal(null)} onResults={onResults} onUpgrade={() => router.push('/planos')} />}
-      {modal === 'add' && <AddModal me={me} onClose={() => { setModal(null); loadMe(); }} onAdded={r => onResults([r])} />}
-      {modal === 'settings' && <SettingsModal settings={me.settings} onClose={() => setModal(null)} onSaved={v => setMe(m => ({ ...m, settings: v }))} />}
-      {modal === 'limite' && (
-        <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && setModal(null)}>
-          <div className="modal"><h2>Limite do mês</h2><p className="muted" style={{ margin: '10px 0 16px' }}>{toast || 'Você chegou ao limite do seu plano.'}</p><div className="row"><Link className="btn" href="/planos">Ver planos</Link><button className="btn ghost" onClick={() => setModal(null)}>Fechar</button></div></div>
-        </div>
-      )}
-      {toast && modal !== 'limite' && <div className={s.toast} role="status">{toast}</div>}
-      {MOCK && <div className={s.demo}>Modo de demonstração: dados de exemplo</div>}
+      {modal === 'scan' && <ScanModal onClose={() => setModal(null)} onResults={onResults} />}
+      {modal === 'add' && <AddModal onClose={() => setModal(null)} onAdded={r => onResults([r])} />}
+      {modal === 'settings' && <SettingsModal settings={settings} onClose={() => setModal(null)} onSaved={v => setSettings(v)} onImported={() => { setLeads(listLeads()); setSettings(loadSettings()); setFitKey(k => k + 1); }} />}
+      {toast && <div className={s.toast} role="status">{toast}</div>}
     </div>
   );
 }

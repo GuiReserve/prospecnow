@@ -1,7 +1,0 @@
-.wrap{min-height:100vh;display:grid;place-items:center;align-content:center;gap:22px;padding:24px 16px}
-.box{width:min(420px,100%);background:var(--s);border:1px solid var(--ln);border-radius:20px;padding:28px;display:grid;gap:14px;box-shadow:var(--sh)}
-.box h1{font-size:24px;letter-spacing:-.03em}
-.or{display:flex;align-items:center;gap:10px;color:var(--qu);font-size:12px}
-.or::before,.or::after{content:"";flex:1;height:1px;background:var(--ln)}
-.link{background:none;border:0;padding:0;color:var(--ac);font-weight:700;font-size:14px}
-.terms{font-size:12px;color:var(--qu)}
