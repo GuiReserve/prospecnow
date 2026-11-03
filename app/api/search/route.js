@@ -1,5 +1,6 @@
 import { session, json, fail } from '@/lib/server';
-import { searchPlaces } from '@/lib/osm';
+import { searchPlaces, mockList } from '@/lib/osm';
+import { MOCK } from '@/lib/server';
 
 // Busca manual por nome do negócio e cidade, para adicionar um a um.
 export async function POST(req) {
@@ -10,6 +11,7 @@ export async function POST(req) {
   const query = String(q || '').trim().slice(0, 120);
   if (query.length < 3) return fail('Digite o nome do negócio e a cidade.');
   try {
+    if (MOCK) return json({ results: mockList(query.split(/,| em /)[0] || 'Negócio', query).slice(0, 6).map(p => ({ ...p, sem_site: !p.site })) });
     const list = await searchPlaces(query, /^[A-Z]{2}$/.test(pais || '') ? pais : 'BR');
     return json({ results: list.map(p => ({ ...p, sem_site: !p.site })) });
   } catch (e) {

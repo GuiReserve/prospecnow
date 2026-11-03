@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
-import { api, saveSettings } from '@/lib/client';
+import { api, saveSettings, MOCK } from '@/lib/client';
+import { scanCity } from '@/lib/osm';
 import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS } from '@/lib/plans';
 import s from './app.module.css';
 
@@ -59,7 +60,10 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
     for (let i = 0; i < lista.length; i++) {
       setProg({ i, n: lista.length, cidade: lista[i].cidade, resumo: [...resumo] });
       try {
-        const j = await api('/api/scan', { busca: lista[i].busca || lista[i].cidade, cidade: lista[i].cidade, pais: plano.pais, segmentos: segs });
+        const busca = lista[i].busca || lista[i].cidade;
+        // a busca no mapa roda aqui no navegador; o servidor só confere e salva
+        const results = MOCK ? undefined : await scanCity(busca, segs, plano.pais);
+        const j = await api('/api/scan', { busca, cidade: lista[i].cidade, pais: plano.pais, segmentos: segs, results });
         resumo.push({ cidade: lista[i].cidade, total: j.total, comTelefone: j.comTelefone, semSite: j.semSite });
         onResults(j.results, j.pais);
       } catch (e2) {

@@ -1,5 +1,5 @@
 import { session, json, fail, bump, limitMsg, db, MOCK, validPlaceId, leadCount, MAX_LEADS } from '@/lib/server';
-import { scanCity } from '@/lib/osm';
+import { mockList } from '@/lib/osm';
 import { MAX_SEGMENTS } from '@/lib/plans';
 import { leadRow } from '@/lib/leadrow';
 
@@ -20,13 +20,11 @@ export async function POST(req) {
   if (jaTem >= MAX_LEADS) return fail(`Você chegou ao limite de ${MAX_LEADS} contatos. Remova alguns antes de varrer de novo.`, 400);
   if (!(await bump(s.user.id, 'scans', 1, s.plan.scans))) return fail(limitMsg(s.plan, 'scans'), 402);
 
-  let results;
-  try {
-    results = (await scanCity(busca, segmentos, pais)).filter(p => validPlaceId(p.place_id)).map(p => ({ ...p, cidade, pais, sem_site: !p.site }));
-  } catch (e) {
-    await bump(s.user.id, 'scans', -1, 1e9); // devolve a varredura
-    return fail('O serviço de mapas não respondeu (' + String(e.message || '').slice(0, 80) + '). A varredura não foi descontada; tente de novo em instantes.', 502);
-  }
+  // A busca no OpenStreetMap roda no navegador; aqui o servidor confere, limita e salva.
+  const brutos = MOCK ? segmentos.flatMap(seg => mockList(seg, busca)) : (Array.isArray(body.results) ? body.results.slice(0, 800) : []);
+  const vistos = new Set();
+  const results = brutos.filter(p => p && p.lat != null && p.lng != null && validPlaceId(p.place_id) && !vistos.has(p.place_id) && vistos.add(p.place_id) && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)))
+    .map(p => ({ ...p, segmento: segmentos.includes(p.segmento) ? p.segmento : segmentos[0], cidade, pais, sem_site: !p.site }));
 
   let filtered = results;
   if (!MOCK && results.length) {
