@@ -1,0 +1,102 @@
+-- ProspecNow: rode este arquivo inteiro no SQL Editor do Supabase (uma vez).
+
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  email text,
+  full_name text,
+  plan text not null default 'trial',            -- essencial | pro | agencia (o teste é calculado por trial_ends_at)
+  trial_ends_at timestamptz not null default (now() + interval '7 days'),
+  paid_until timestamptz,
+  asaas_customer_id text,
+  asaas_subscription_id text,
+  settings jsonb not null default '{}'::jsonb,   -- nome, link do portfólio e textos das mensagens
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.usage (
+  user_id uuid not null references auth.users(id) on delete cascade,
+  month text not null,                           -- '2026-11'
+  scans int not null default 0,
+  details int not null default 0,
+  ai int not null default 0,
+  primary key (user_id, month)
+);
+
+-- Pelas regras do Google, guardamos só o place_id (para sempre) e a localização (até 30 dias).
+-- Nome, telefone e endereço são buscados de novo quando o contato é aberto.
+create table if not exists public.leads (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  place_id text not null,
+  segmento text,
+  cidade text,
+  pais text default 'BR',
+  lat double precision,
+  lng double precision,
+  coords_at timestamptz,
+  sem_site boolean,
+  status text not null default 'novo',           -- novo | auto | conv | fechou | nao | fim
+  contacts date[] not null default '{}',
+  note text not null default '',
+  photo_url text,
+  created_at timestamptz not null default now(),
+  unique (user_id, place_id)
+);
+create index if not exists leads_user_idx on public.leads(user_id);
+
+create table if not exists public.optout (
+  place_id text primary key,                     -- negócios que pediram para sair
+  created_at timestamptz not null default now()
+);
+
+alter table public.profiles enable row level security;
+alter table public.usage enable row level security;
+alter table public.leads enable row level security;
+alter table public.optout enable row level security;
+
+drop policy if exists "perfil proprio" on public.profiles;
+create policy "perfil proprio" on public.profiles for select using (auth.uid() = id);
+drop policy if exists "perfil atualiza" on public.profiles;
+create policy "perfil atualiza" on public.profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+-- o usuário só pode mudar o próprio nome e as configurações; plano e cobrança só pelo servidor
+revoke update on public.profiles from authenticated;
+grant update (full_name, settings) on public.profiles to authenticated;
+
+drop policy if exists "uso proprio" on public.usage;
+create policy "uso proprio" on public.usage for select using (auth.uid() = user_id);
+
+drop policy if exists "leads proprios" on public.leads;
+create policy "leads proprios" on public.leads for select using (auth.uid() = user_id);
+drop policy if exists "leads atualiza" on public.leads;
+create policy "leads atualiza" on public.leads for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "leads apaga" on public.leads;
+create policy "leads apaga" on public.leads for delete using (auth.uid() = user_id);
+revoke update on public.leads from authenticated;
+grant update (status, contacts, note, photo_url) on public.leads to authenticated;
+
+-- cria o perfil quando alguém se cadastra
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  insert into public.profiles (id, email, full_name)
+  values (new.id, new.email, coalesce(new.raw_user_meta_data->>'full_name', ''))
+  on conflict (id) do nothing;
+  return new;
+end; $$;
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+
+-- soma uso de forma atômica (chamado só pelo servidor)
+create or replace function public.bump_usage(p_user uuid, p_month text, p_field text, p_amount int, p_limit int)
+returns boolean language plpgsql security definer set search_path = public as $$
+declare cur int;
+begin
+  if p_field not in ('scans', 'details', 'ai') then raise exception 'campo inválido'; end if;
+  insert into public.usage (user_id, month) values (p_user, p_month) on conflict do nothing;
+  execute format('select %I from public.usage where user_id=$1 and month=$2 for update', p_field) into cur using p_user, p_month;
+  if cur + p_amount > p_limit then return false; end if;
+  execute format('update public.usage set %I = %I + $3 where user_id=$1 and month=$2', p_field, p_field) using p_user, p_month, p_amount;
+  return true;
+end; $$;
+revoke execute on function public.bump_usage from public, anon, authenticated;

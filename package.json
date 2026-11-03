@@ -1,0 +1,17 @@
+{
+  "name": "prospecnow",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@googlemaps/markerclusterer": "2.6.2",
+    "@supabase/supabase-js": "2.118.0",
+    "next": "15.5.27",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
+  }
+}
