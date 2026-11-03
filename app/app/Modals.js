@@ -23,7 +23,7 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
   const [pais, setPais] = useState('BR');
   const [area, setArea] = useState('');
   const base = pais === 'PT' ? SEGMENTOS_PT : SEGMENTOS_BR;
-  const [segs, setSegs] = useState(SEGMENTOS_BR.slice(0, MAX_SEGMENTS));
+  const [segs, setSegs] = useState(SEGMENTOS_BR.slice(0, 5));
   const [extra, setExtra] = useState('');
   const [plano, setPlano] = useState(null);
   const [marc, setMarc] = useState({});
@@ -42,7 +42,7 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
   );
 
   function toggle(sg) { setSegs(v => v.includes(sg) ? v.filter(x => x !== sg) : v.length >= MAX_SEGMENTS ? v : [...v, sg]); }
-  function changePais(p) { setPais(p); setSegs((p === 'PT' ? SEGMENTOS_PT : SEGMENTOS_BR).slice(0, MAX_SEGMENTS)); }
+  function changePais(p) { setPais(p); setSegs((p === 'PT' ? SEGMENTOS_PT : SEGMENTOS_BR).slice(0, 5)); }
 
   async function planejar(e) {
     e.preventDefault(); setErr(''); setBusy(true);
@@ -71,8 +71,8 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
           .filter(p => p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && p.place_id && !vistos.has(p.place_id) && vistos.add(p.place_id))
           .slice(0, 800)
           .map(p => ({ ...p, segmento: segs.includes(p.segmento) ? p.segmento : segs[0], cidade: lista[i].cidade, pais: plano.pais }));
-        resumo.push({ cidade: lista[i].cidade, total: results.length, comTelefone: results.filter(r => r.digits).length, semSite: results.filter(r => !r.site).length });
-        await onResults(results);
+        const novos = results.length ? await onResults(results) : 0;
+        resumo.push({ cidade: lista[i].cidade, total: results.length, novos, comTelefone: results.filter(r => r.digits).length, semSite: results.filter(r => !r.site).length });
       } catch (e2) {
         resumo.push({ cidade: lista[i].cidade, erro: e2.message });
       }
@@ -124,10 +124,10 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
 
       {prog && (
         <div style={{ display: 'grid', gap: 12 }}>
-          {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n})</p>}
+          {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n}). Costuma levar de 10 a 40 segundos por cidade.</p>}
           <div className={s.prog}><i style={{ width: `${Math.round(((prog.done ? prog.n : prog.i) / prog.n) * 100)}%` }} /></div>
           <ul className={s.resumo}>
-            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios, {r.comTelefone} com telefone, {r.semSite} sem site cadastrado</>}</li>)}
+            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios encontrados{r.total ? `, ${r.novos} salvos agora (${r.total - r.novos} já estavam na sua lista)` : '. Tente outros segmentos'}; {r.comTelefone} com telefone, {r.semSite} sem site cadastrado</>}</li>)}
           </ul>
           {prog.done && <div className="row"><button className="btn" onClick={onClose}>Ver no mapa</button></div>}
         </div>

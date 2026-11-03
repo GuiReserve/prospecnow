@@ -74,8 +74,9 @@ export default function AppPage() {
   const pick = useCallback(l => setSel(l.id), []);
 
   async function onResults(results) {
-    try { await addLeads(results); setLeads(await listLeads()); setFitKey(k => k + 1); }
-    catch (e) { setToast(e.message); }
+    const novos = await addLeads(results);   // se falhar, o erro aparece na própria janela da varredura
+    setLeads(await listLeads()); setFitKey(k => k + 1);
+    return novos;
   }
   async function sair() { await supabase().auth.signOut().catch(() => {}); router.push('/'); }
 
