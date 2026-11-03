@@ -6,7 +6,7 @@
 .plan{background:var(--s);border:1px solid var(--ln);border-radius:18px;padding:22px;display:grid;gap:12px}
 .plan h2{font-size:18px}
 .plan ul{margin:0;padding-left:18px;color:var(--mu);font-size:14px;display:grid;gap:5px}
-.best{border:2px solid var(--fg)}
+.best{border:2px solid var(--ac)}
 .price{color:var(--mu)}
 .price b{font-size:32px;color:var(--fg);letter-spacing:-.03em}
 .small{font-size:13px;color:var(--qu);margin-top:14px}

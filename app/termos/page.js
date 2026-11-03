@@ -6,7 +6,7 @@ export const metadata = { title: 'Termos de uso · ProspecNow' };
 export default function Termos() {
   return (
     <main className={s.wrap}>
-      <Link href="/" className="logo"><i />ProspecNow</Link>
+      <Link href="/" className="logo"><i /><span>Prospec<b>Now</b></span></Link>
       <h1>Termos de uso</h1>
       <h2>O serviço</h2>
       <p>O ProspecNow ajuda a encontrar negócios no mapa, organizar contatos e preparar mensagens. O envio das mensagens é sempre feito por você, no seu próprio WhatsApp.</p>

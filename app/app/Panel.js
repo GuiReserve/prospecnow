@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, api } from '@/lib/client';
 import s from './app.module.css';
 
-const SEGC = ['#3F5BD9', '#C2477A', '#1F8A70', '#7A4CC2', '#D2662B', '#B83A3A', '#2E7DA6', '#8A6D1F', '#4F6B2A', '#9C3FA8'];
+const SEGC = ['#2F7FD1', '#1E9E5A', '#D98E0B', '#2E8C8C', '#4F79A8', '#6E9A34', '#C2703A', '#5C6BB8', '#3E8E6B', '#A06A2C'];
 function hash(t) { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
 function initials(n) { return String(n).replace(/[^A-Za-zÀ-ÿ0-9 ]/g, '').split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase(); }
 const I = {

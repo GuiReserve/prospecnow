@@ -51,7 +51,7 @@ export default function Planos() {
   return (
     <div className={s.wrap}>
       <div className="row" style={{ marginBottom: 24 }}>
-        <Link href="/app" className="logo"><i />ProspecNow</Link><span className="spacer" />
+        <Link href="/app" className="logo"><i /><span>Prospec<b>Now</b></span></Link><span className="spacer" />
         <Link href="/app" className="btn ghost sm">Voltar ao mapa</Link>
       </div>
       <h1>Planos</h1>

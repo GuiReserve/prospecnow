@@ -8,15 +8,15 @@
 .lead{font-size:18px;color:var(--mu);margin:20px 0 26px;max-width:56ch}
 .note{font-size:13px;color:var(--qu);margin-top:14px}
 .shot{position:relative;height:440px}
-.mapArt{position:absolute;inset:0 0 0 18%;border-radius:22px;background:#E9EDE4;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--ln);
-  background-image:linear-gradient(#DCE3D3 1px,transparent 1px),linear-gradient(90deg,#DCE3D3 1px,transparent 1px);background-size:44px 44px}
-.road1,.road2,.road3{position:absolute;background:#fff;box-shadow:0 0 0 1px #D6DBD0}
-.road1{left:-10%;right:-10%;top:44%;height:14px;transform:rotate(-8deg)}
+.mapArt{position:absolute;inset:0 0 0 18%;border-radius:22px;background:#F1F3F4;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--ln);
+  background-image:radial-gradient(ellipse 40% 30% at 85% 15%,#CEEAD6 98%,transparent),radial-gradient(ellipse 70% 22% at 40% 105%,#A8CFF5 98%,transparent)}
+.road1,.road2,.road3{position:absolute;background:#fff;box-shadow:0 0 0 1px #DADCE0}
+.road1{background:#FDE293;box-shadow:0 0 0 1px #F3C64B;left:-10%;right:-10%;top:44%;height:14px;transform:rotate(-8deg)}
 .road2{top:-10%;bottom:-10%;left:58%;width:12px;transform:rotate(12deg)}
 .road3{left:10%;right:30%;top:78%;height:9px;transform:rotate(4deg)}
 .pin{position:absolute;width:16px;height:16px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
 .panelArt{position:absolute;left:0;top:34px;width:56%;background:#fff;border-radius:18px;box-shadow:0 18px 40px rgba(11,15,20,.18);overflow:hidden;border:1px solid var(--ln)}
-.cover{height:96px;background:linear-gradient(135deg,#3F5BD9,#7A4CC2);color:#fff;font-weight:800;font-size:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;letter-spacing:-.04em;line-height:1}
+.cover{height:96px;background:#CEEAD6;color:#1E9E5A;font-weight:800;font-size:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;letter-spacing:-.04em;line-height:1}
 .cover small{font-size:10px;letter-spacing:.14em;margin-top:6px;opacity:.9}
 .pBody{padding:14px;display:grid;gap:6px}
 .pBody b{font-size:16px}
@@ -29,7 +29,7 @@
 .section h2{font-size:clamp(26px,3vw,36px);letter-spacing:-.035em;margin-bottom:10px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
 .steps>div{background:var(--s);border:1px solid var(--ln);border-radius:var(--r);padding:22px}
-.steps b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--fg);color:#fff;margin-bottom:12px}
+.steps b{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:9px;background:var(--ac);color:#fff;margin-bottom:12px}
 .steps h3{font-size:17px;margin-bottom:6px}
 .steps p,.features p{color:var(--mu);font-size:15px}
 .features{display:grid;grid-template-columns:repeat(2,1fr);gap:28px 40px;border-top:1px solid var(--ln);padding-top:40px}
@@ -38,8 +38,8 @@
 .plan{background:var(--s);border:1px solid var(--ln);border-radius:18px;padding:24px;display:grid;gap:14px;position:relative}
 .plan h3{font-size:18px}
 .plan ul{margin:0;padding-left:18px;color:var(--mu);display:grid;gap:6px;font-size:14px}
-.best{border:2px solid var(--fg);box-shadow:var(--sh)}
-.tag{position:absolute;top:-12px;left:20px;background:var(--fg);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}
+.best{border:2px solid var(--ac);box-shadow:var(--sh)}
+.tag{position:absolute;top:-12px;left:20px;background:var(--ac);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:3px 10px}
 .price{color:var(--mu)}
 .price b{font-size:34px;color:var(--fg);letter-spacing:-.03em}
 .small{font-size:13px;color:var(--qu);margin-top:16px}

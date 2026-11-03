@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main>
       <header className={s.nav}>
-        <Link href="/" className="logo"><i />ProspecNow</Link>
+        <Link href="/" className="logo"><i /><span>Prospec<b>Now</b></span></Link>
         <nav className={s.links}>
           <a href="#como">Como funciona</a>
           <a href="#planos">Planos</a>
@@ -38,7 +38,7 @@ export default function Home() {
         <div className={s.shot} aria-label="Ilustração do ProspecNow">
           <div className={s.mapArt}>
             <span className={s.road1} /><span className={s.road2} /><span className={s.road3} />
-            {[[22, 30, '#3B5BFD'], [38, 52, '#3B5BFD'], [61, 34, '#F29D0B'], [70, 62, '#1FA855'], [48, 74, '#3B5BFD'], [30, 66, '#8A919D'], [80, 24, '#3B5BFD']].map(([x, y, c], i) => (
+            {[[22, 30, '#2F7FD1'], [38, 52, '#2F7FD1'], [61, 34, '#E39B0B'], [70, 62, '#1E9E5A'], [48, 74, '#2F7FD1'], [30, 66, '#80868B'], [80, 24, '#2F7FD1']].map(([x, y, c], i) => (
               <i key={i} className={s.pin} style={{ left: x + '%', top: y + '%', background: c }} />
             ))}
           </div>
@@ -103,7 +103,7 @@ export default function Home() {
       </section>
 
       <footer className={s.footer}>
-        <span className="logo"><i />ProspecNow</span>
+        <span className="logo"><i /><span>Prospec<b>Now</b></span></span>
         <span className="muted">Dados de lugares fornecidos pelo Google Maps.</span>
         <span className="spacer" />
         <Link href="/privacidade">Privacidade</Link>

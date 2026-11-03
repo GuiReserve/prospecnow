@@ -5,7 +5,7 @@ export const metadata = {
   description: 'Ache clientes para o seu serviço na sua cidade, veja tudo no mapa e mande a primeira mensagem pelo WhatsApp em minutos.'
 };
 
-export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#0B0F14' };
+export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#FFFFFF' };
 
 export default function RootLayout({ children }) {
   return (

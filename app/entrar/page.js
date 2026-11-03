@@ -59,7 +59,7 @@ function Form() {
 
   return (
     <div className={s.wrap}>
-      <Link href="/" className="logo"><i />ProspecNow</Link>
+      <Link href="/" className="logo"><i /><span>Prospec<b>Now</b></span></Link>
       <form className={s.box} onSubmit={submit}>
         <h1>{criar ? 'Comece seus 7 dias grátis' : 'Entrar'}</h1>
         <p className="muted">{criar ? 'Sem cartão. Você testa o plano Pro completo.' : 'Bem-vindo de volta.'}</p>

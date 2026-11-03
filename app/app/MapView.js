@@ -60,9 +60,9 @@ export default function MapView({ leads, nameOf, selectedId, onPick, mode, satel
         const box = document.createElement('div');
         box.style.cssText = 'font:14px/1.4 Manrope,system-ui,sans-serif;min-width:210px;padding:4px 2px';
         const b = document.createElement('b'); b.textContent = nameOf(l); b.style.display = 'block';
-        const sm = document.createElement('div'); sm.textContent = `${l.segmento || ''} · ${l.cidade || ''}`; sm.style.cssText = 'color:#59606E;font-size:12px;margin:2px 0 10px';
+        const sm = document.createElement('div'); sm.textContent = `${l.segmento || ''} · ${l.cidade || ''}`; sm.style.cssText = 'color:#5F6368;font-size:12px;margin:2px 0 10px';
         const bt = document.createElement('button'); bt.textContent = 'Criar oportunidade';
-        bt.style.cssText = 'width:100%;border:0;border-radius:999px;background:#3B5BFD;color:#fff;font-weight:700;padding:8px 12px;cursor:pointer';
+        bt.style.cssText = 'width:100%;border:0;border-radius:999px;background:#2F7FD1;color:#fff;font-weight:700;padding:8px 12px;cursor:pointer';
         bt.onclick = () => { info.current.close(); onPick(l); };
         box.append(b, sm, bt);
         info.current.setContent(box);

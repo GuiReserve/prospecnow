@@ -7,7 +7,7 @@ const EMAIL = process.env.NEXT_PUBLIC_CONTATO_EMAIL || 'contato@prospecnow.com.b
 export default function Privacidade() {
   return (
     <main className={s.wrap}>
-      <Link href="/" className="logo"><i />ProspecNow</Link>
+      <Link href="/" className="logo"><i /><span>Prospec<b>Now</b></span></Link>
       <h1>Política de privacidade</h1>
       <p>Esta política explica quais dados o ProspecNow usa e como, de acordo com a Lei Geral de Proteção de Dados (LGPD).</p>
       <h2>Dados de quem usa o ProspecNow</h2>
