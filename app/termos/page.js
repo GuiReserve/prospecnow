@@ -15,12 +15,12 @@ export default function Termos() {
         <li>Use o ProspecNow para contato comercial individual e respeitoso.</li>
         <li>Não use para disparo em massa, spam, assédio ou qualquer finalidade ilegal.</li>
         <li>Respeite quem pedir para não receber mais mensagens.</li>
-        <li>Não copie, revenda ou exporte em massa os dados do Google Maps mostrados no app.</li>
+        <li>Não revenda nem exporte em massa os dados mostrados no app. Os dados de negócios vêm do OpenStreetMap (licença ODbL) e devem manter a atribuição.</li>
       </ul>
       <h2>Teste grátis e planos</h2>
-      <p>Novas contas têm 7 dias de teste com os limites indicados na página de planos. Os planos pagos são mensais, cobrados pelo Stripe, e renovam até você cancelar. Ao cancelar, o acesso continua até o fim do período pago. Os limites de varreduras e contatos abertos reiniciam todo mês e não acumulam.</p>
+      <p>Novas contas têm 7 dias de teste com os limites indicados na página de planos. Os planos pagos são mensais, cobrados pelo Stripe, e renovam até você cancelar. Ao cancelar, o acesso continua até o fim do período pago. Os limites de varreduras e de mensagens pela IA reiniciam todo mês e não acumulam.</p>
       <h2>Responsabilidades</h2>
-      <p>Os dados dos negócios vêm do Google Maps e podem estar desatualizados. Você é responsável pelas mensagens que envia. Podemos suspender contas que descumprirem estes termos.</p>
+      <p>Os dados dos negócios vêm do OpenStreetMap, um mapa colaborativo, e podem estar incompletos ou desatualizados. Confira antes de enviar. Você é responsável pelas mensagens que envia. Podemos suspender contas que descumprirem estes termos.</p>
     </main>
   );
 }

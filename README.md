@@ -1,8 +1,8 @@
 # ProspecNow
 
-Prospecção pelo mapa: o agente de IA varre cidades, regiões ou países no Google Maps, mostra os negócios sem site em um mapa 2D/3D e prepara a mensagem de WhatsApp de cada etapa (primeiro contato, acompanhamento em 4 dias, último em mais 7).
+Prospecção pelo mapa: o agente varre cidades, regiões ou países no OpenStreetMap, mostra os negócios (com telefone primeiro) em um mapa 2D/3D e prepara a mensagem de WhatsApp de cada etapa (primeiro contato, acompanhamento em 4 dias, último em mais 7).
 
-Feito com Next.js, Supabase (login e banco), Google Maps Platform (mapa e dados), Anthropic (IA) e Stripe (cobrança).
+Feito com Next.js, Supabase (login e banco), MapLibre + OpenFreeMap (mapa), OpenStreetMap via Nominatim e Overpass (dados, sem chave), Anthropic (IA, opcional) e Stripe (cobrança).
 
 ## Rodar sem chaves (demonstração)
 
@@ -24,14 +24,9 @@ Todas as chaves vão nas variáveis de ambiente da Vercel (Settings > Environmen
 4. Em **Authentication > URL Configuration**, coloque o endereço do site em *Site URL* e adicione `https://SEU-SITE/app` em *Redirect URLs*.
 5. (Opcional) Em **Authentication > Providers > Google**, ative o login com Google.
 
-### 2. Google Maps Platform
-1. No Google Cloud, crie um projeto e ative a cobrança.
-2. Ative **Maps JavaScript API** e **Places API (New)**.
-3. Crie duas chaves:
-   - **Navegador** → `NEXT_PUBLIC_GOOGLE_MAPS_KEY`: restrinja por site (o seu domínio) e só à Maps JavaScript API.
-   - **Servidor** → `GOOGLE_PLACES_KEY`: restrinja só à Places API (New). Nunca use essa no navegador.
-4. Em **Map Management**, crie um Map ID do tipo *JavaScript / Vector* e coloque em `NEXT_PUBLIC_GOOGLE_MAP_ID` (o 3D precisa dele).
-5. Recomendado: em **Quotas**, ponha um limite diário de chamadas e um alerta de orçamento.
+### 2. Mapa e dados (sem chave)
+O mapa é do OpenFreeMap e os negócios vêm do OpenStreetMap (Nominatim para achar a cidade, Overpass para listar os negócios). Não há chave nem custo. Esses serviços públicos têm limite de uso justo: para muito volume, dá para trocar por um servidor Overpass próprio em `lib/osm.js`.
+Se o banco foi criado antes desta mudança, rode `supabase/osm.sql` no SQL Editor.
 
 ### 3. IA (Anthropic)
 Crie uma chave em console.anthropic.com e coloque em `ANTHROPIC_API_KEY`. Sem ela, o app funciona: o agente separa as cidades pelo texto digitado e as mensagens ficam no texto padrão.
@@ -49,19 +44,17 @@ Importe o repositório, cadastre as variáveis e publique. O plano Hobby da Verc
 
 ## Planos e limites
 
-Definidos em `lib/plans.js`. Uma varredura = uma cidade com até 10 segmentos (até 10 buscas no Google). Contato aberto = uma consulta de detalhes com foto.
+Definidos em `lib/plans.js`. Uma varredura = uma cidade com até 10 segmentos (uma consulta ao OpenStreetMap). A busca manual não tem limite.
 
-| Plano | Preço | Varreduras/mês | Contatos abertos/mês |
+| Plano | Preço | Varreduras/mês | Mensagens pela IA/mês |
 |---|---|---|---|
 | Teste (7 dias, sem cartão) | grátis | 1 | 50 |
 | Essencial | R$ 29 | 0 (busca manual) | 100 |
-| Pro | R$ 67 | 8 | 200 |
-| Agência | R$ 147 | 25 | 500 |
+| Pro | R$ 67 | 8 | 400 |
+| Agência | R$ 147 | 25 | 1000 |
 
-## Regras do Google que o código já segue
-- Resultados mostrados em mapa ficam num mapa do Google, com a atribuição "Google Maps".
-- O banco guarda só o `place_id` (permitido para sempre) e a localização por até 30 dias (`/api/leads/refresh` renova).
-- Nome, telefone e foto são buscados de novo quando o contato é aberto.
+## Atribuição
+Os dados são © colaboradores do OpenStreetMap (ODbL). O app mostra essa atribuição no mapa, na lista e no painel; mantenha-a.
 
 ## LGPD
 `optout` guarda negócios que pediram para sair (são ignorados nas varreduras). Para adicionar um: `insert into optout (place_id) values ('...');` no SQL Editor.

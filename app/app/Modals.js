@@ -60,7 +60,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
       setProg({ i, n: lista.length, cidade: lista[i].cidade, resumo: [...resumo] });
       try {
         const j = await api('/api/scan', { busca: lista[i].busca || lista[i].cidade, cidade: lista[i].cidade, pais: plano.pais, segmentos: segs });
-        resumo.push({ cidade: lista[i].cidade, total: j.total, semSite: j.semSite });
+        resumo.push({ cidade: lista[i].cidade, total: j.total, comTelefone: j.comTelefone, semSite: j.semSite });
         onResults(j.results, j.pais);
       } catch (e2) {
         resumo.push({ cidade: lista[i].cidade, erro: e2.message });
@@ -117,7 +117,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
           {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n})</p>}
           <div className={s.prog}><i style={{ width: `${Math.round(((prog.done ? prog.n : prog.i) / prog.n) * 100)}%` }} /></div>
           <ul className={s.resumo}>
-            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios ({r.semSite} sem site)</>}</li>)}
+            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios, {r.comTelefone} com telefone, {r.semSite} sem site cadastrado</>}</li>)}
           </ul>
           {prog.done && <div className="row"><button className="btn" onClick={onClose}>Ver no mapa</button></div>}
         </div>
@@ -146,15 +146,15 @@ export function AddModal({ me, onClose, onAdded }) {
     try { const j = await api('/api/search', { q, pais }); setRes(j.results); } catch (e2) { setErr(e2.message); } finally { setBusy(false); }
   }
   async function add(p) {
-    const row = { ...p, segmento: seg || 'Outros', cidade: cityFrom(p.endereco), pais };
+    const row = { ...p, segmento: seg || 'Outros', cidade: p.cidade || cityFrom(p.endereco), pais };
     try { await api('/api/leads', row); setAdded(a => ({ ...a, [p.place_id]: true })); onAdded(row); } catch (e2) { setErr(e2.message); }
   }
   return (
     <Modal title="Adicionar negócio" onClose={onClose} wide>
       <form onSubmit={buscar} style={{ display: 'grid', gap: 12 }}>
-        <p className="muted">Busque como no Google Maps. Cada busca usa 1 dos seus {me.plan.details} contatos do mês ({me.plan.details - me.usage.details} restantes).</p>
+        <p className="muted">Busque pelo nome do negócio e a cidade. Os resultados vêm do OpenStreetMap, então negócios muito pequenos podem não aparecer.</p>
         <div className={s.grid2}>
-          <div className="field"><label htmlFor="q">Nome ou tipo de negócio e cidade</label><input id="q" value={q} onChange={e => setQ(e.target.value)} placeholder="Ex.: barbearia no centro de Barueri" required /></div>
+          <div className="field"><label htmlFor="q">Nome ou tipo de negócio e cidade</label><input id="q" value={q} onChange={e => setQ(e.target.value)} placeholder="Ex.: Barbearia do Zé, Barueri" required /></div>
           <div className="field"><label htmlFor="p2">País</label><select id="p2" value={pais} onChange={e => setPais(e.target.value)}>{PAISES.map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div>
         </div>
         <div className="field"><label htmlFor="sg">Segmento para salvar</label><input id="sg" value={seg} onChange={e => setSeg(e.target.value)} placeholder="Ex.: Barbearia" /></div>
@@ -166,13 +166,13 @@ export function AddModal({ me, onClose, onAdded }) {
           {!res.length && <li className="muted">Nada encontrado.</li>}
           {res.map(p => (
             <li key={p.place_id}>
-              <div><b>{p.nome}</b><small>{p.endereco}</small><small>{p.nota != null ? `${String(p.nota).replace('.', ',')} ★ (${p.aval})` : ''} {p.site ? '· tem site' : '· sem site no Google'}</small></div>
+              <div><b>{p.nome}</b><small>{p.endereco}</small><small>{p.telefone ? p.telefone : 'sem telefone'} · {p.site ? 'tem site' : 'sem site cadastrado'}</small></div>
               <button className="btn sm" disabled={added[p.place_id]} onClick={() => add(p)}>{added[p.place_id] ? 'Adicionado' : 'Adicionar'}</button>
             </li>
           ))}
         </ul>
       )}
-      <p className={s.src}>Resultados do Google Maps.</p>
+      <p className={s.src}>Dados: © colaboradores do OpenStreetMap.</p>
     </Modal>
   );
 }

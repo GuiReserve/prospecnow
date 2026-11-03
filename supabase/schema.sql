@@ -23,12 +23,18 @@ create table if not exists public.usage (
   primary key (user_id, month)
 );
 
--- Pelas regras do Google, guardamos só o place_id (para sempre) e a localização (até 30 dias).
--- Nome, telefone e endereço são buscados de novo quando o contato é aberto.
+-- Dados dos negócios: OpenStreetMap (licença ODbL, pode guardar com atribuição).
 create table if not exists public.leads (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
-  place_id text not null,
+  place_id text not null,                        -- osm-n123 (nó), osm-w123 (via)
+  nome text,
+  telefone text,
+  digits text,
+  site text,
+  endereco text,
+  instagram text,
+  horario text,
   segmento text,
   cidade text,
   pais text default 'BR',
@@ -136,3 +142,19 @@ revoke insert, update, delete, truncate on public.usage from anon, authenticated
 revoke insert, truncate on public.leads from anon, authenticated;
 revoke all on public.optout from anon, authenticated;
 revoke all on public.profiles, public.usage, public.leads from anon;
+
+-- colunas do OpenStreetMap (seguro rodar de novo)
+alter table public.leads add column if not exists nome text;
+alter table public.leads add column if not exists telefone text;
+alter table public.leads add column if not exists digits text;
+alter table public.leads add column if not exists site text;
+alter table public.leads add column if not exists endereco text;
+alter table public.leads add column if not exists instagram text;
+alter table public.leads add column if not exists horario text;
+
+alter table public.leads drop constraint if exists leads_dados_tamanho;
+alter table public.leads add constraint leads_dados_tamanho check (
+  coalesce(length(nome),0) <= 120 and coalesce(length(telefone),0) <= 40 and coalesce(length(digits),0) <= 15
+  and coalesce(length(site),0) <= 300 and coalesce(length(endereco),0) <= 200
+  and coalesce(length(instagram),0) <= 120 and coalesce(length(horario),0) <= 120
+) not valid;

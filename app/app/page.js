@@ -2,8 +2,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { api, listLeads, mergeScanIntoMock, seq, STATUS, supabase, MOCK, mockSettings } from '@/lib/client';
-import MapView, { hasMap } from './MapView';
+import { api, listLeads, mergeScanIntoMock, seq, STATUS, supabase, MOCK, mockSettings, infoOf } from '@/lib/client';
+import dynamic from 'next/dynamic';
+const MapView = dynamic(() => import('./MapView'), { ssr: false });
+const hasMap = true;
 import Panel from './Panel';
 import { ScanModal, AddModal, SettingsModal } from './Modals';
 import s from './app.module.css';
@@ -12,12 +14,9 @@ export default function AppPage() {
   const router = useRouter();
   const [me, setMe] = useState(null);
   const [leads, setLeads] = useState([]);
-  const [info, setInfo] = useState({}); // dados do Google só na memória desta sessão
   const [sel, setSel] = useState(null);
-  const [opening, setOpening] = useState(false);
   const [view, setView] = useState(hasMap ? 'mapa' : 'lista');
   const [mode, setMode] = useState('2d');
-  const [sat, setSat] = useState(false);
   const [seg, setSeg] = useState('Todos');
   const [city, setCity] = useState('Todas');
   const [stf, setStf] = useState('todos');
@@ -43,14 +42,13 @@ export default function AppPage() {
         await loadMe();
         setLeads(await listLeads());
         setFitKey(k => k + 1);
-        if (!MOCK) api('/api/leads/refresh', {}).then(r => { if (r.atualizados) listLeads().then(setLeads); }).catch(() => { });
       } catch (e) { if (e.status === 401) router.replace('/entrar'); else setToast(e.message); }
     })();
   }, [router, loadMe]);
 
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(''), 5000); return () => clearTimeout(t); }, [toast]);
 
-  const nameOf = useCallback(l => info[l.place_id]?.nome || `${l.segmento || 'Negócio'} em ${l.cidade || ''}`, [info]);
+  const nameOf = useCallback(l => l.nome || `${l.segmento || 'Negócio'} em ${l.cidade || ''}`, []);
   const segs = useMemo(() => [...new Set(leads.map(l => l.segmento).filter(Boolean))].sort(), [leads]);
   const cities = useMemo(() => [...new Set(leads.map(l => l.cidade).filter(Boolean))].sort(), [leads]);
   const visible = useMemo(() => leads.filter(l => {
@@ -75,18 +73,7 @@ export default function AppPage() {
   const selLead = leads.find(l => l.id === sel) || null;
   const pick = useCallback(l => setSel(l.id), []);
 
-  async function openDetails() {
-    if (!selLead) return;
-    setOpening(true);
-    try {
-      const d = await api('/api/details', { place_id: selLead.place_id, pais: selLead.pais });
-      setInfo(v => ({ ...v, [selLead.place_id]: d }));
-      setMe(m => m && ({ ...m, usage: { ...m.usage, details: m.usage.details + 1 } }));
-    } catch (e) { setToast(e.message); if (e.status === 402) setModal('limite'); } finally { setOpening(false); }
-  }
-
   function onResults(results) {
-    setInfo(v => { const n = { ...v }; results.forEach(r => { n[r.place_id] = r; }); return n; });
     mergeScanIntoMock(results).then(() => listLeads()).then(l => { setLeads(l); setFitKey(k => k + 1); });
     loadMe().catch(() => { });
   }
@@ -99,8 +86,7 @@ export default function AppPage() {
 
   return (
     <div className={s.app}>
-      {view === 'mapa' && hasMap && <MapView leads={visible} nameOf={nameOf} selectedId={sel} onPick={pick} mode={mode} satellite={sat} fitKey={fitKey} panelOpen={!!selLead} />}
-      {view === 'mapa' && !hasMap && <div className={s.nomap}><p><b>O mapa do Google aparece aqui</b> quando a chave do Google Maps estiver configurada. Enquanto isso, use a lista.</p></div>}
+      {view === 'mapa' && hasMap && <MapView leads={visible} nameOf={nameOf} selectedId={sel} onPick={pick} mode={mode} fitKey={fitKey} panelOpen={!!selLead} />}
 
       <header className={s.top + (selLead ? ' ' + s.shift : '')}>
         <div className={s.bar}>
@@ -132,7 +118,7 @@ export default function AppPage() {
         <div className={s.planBox}>
           <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}</span>
           <span>Varreduras {me.usage.scans}/{p.scans}</span>
-          <span>Contatos {me.usage.details}/{p.details}</span>
+          <span>Contatos {leads.length}</span>
           <Link href="/planos" className={s.planLink}>{p.id === 'trial' || p.id === 'expirado' ? 'Assinar' : 'Plano'}</Link>
         </div>
         <div className="row" style={{ justifyContent: 'flex-end' }}>
@@ -145,7 +131,6 @@ export default function AppPage() {
           <div className={s.viewBtns} role="group" aria-label="Modo do mapa">
             <button aria-pressed={mode === '2d'} onClick={() => setMode('2d')}>2D</button>
             <button aria-pressed={mode === '3d'} onClick={() => setMode('3d')}>3D</button>
-            <button aria-pressed={sat} onClick={() => setSat(!sat)}>Satélite</button>
           </div>
         )}
       </div>
@@ -167,13 +152,13 @@ export default function AppPage() {
             return (
               <button key={l.id} className={s.item + (l.id === sel ? ' ' + s.itemSel : '')} onClick={() => setSel(l.id)}>
                 <i style={{ background: st.pin || st.color }} />
-                <span><b>{nameOf(l)}</b><small>{l.segmento} · {l.cidade}{l.sem_site ? ' · sem site' : ''}</small></span>
+                <span><b>{nameOf(l)}</b><small>{l.segmento} · {l.cidade}{l.sem_site ? ' · sem site' : ''}{l.digits ? '' : ' · sem telefone'}</small></span>
                 <em style={{ background: st.bg, color: st.color }}>{st.label}</em>
               </button>
             );
           })}
           {visible.length > 400 && <p className="muted" style={{ padding: 12 }}>Mostrando 400 de {visible.length}. Use os filtros.</p>}
-          <p className={s.src}>Dados dos negócios: Google Maps</p>
+          <p className={s.src}>Dados dos negócios: © colaboradores do OpenStreetMap</p>
         </section>
       )}
 
@@ -181,7 +166,7 @@ export default function AppPage() {
         <div className={s.firstRun}><b>Comece pela sua primeira varredura</b><span className="muted">Diga uma cidade, região ou país.</span><button className="btn sm" onClick={() => setModal('scan')}>Nova varredura</button></div>
       )}
 
-      {selLead && <Panel lead={selLead} info={info[selLead.place_id]} settings={me.settings} plan={p} opening={opening} onDetails={openDetails}
+      {selLead && <Panel lead={selLead} info={infoOf(selLead)} settings={me.settings} plan={p}
         onClose={() => setSel(null)} onChange={l => setLeads(v => v.map(x => x.id === l.id ? l : x))} onRemoved={id => { setLeads(v => v.filter(x => x.id !== id)); setSel(null); }} onSettings={() => setModal('settings')} />}
 
       {modal === 'scan' && <ScanModal me={me} onClose={() => setModal(null)} onResults={onResults} onUpgrade={() => router.push('/planos')} />}

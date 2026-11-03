@@ -16,7 +16,7 @@ const I = {
   spark: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6" /></svg>
 };
 
-export default function Panel({ lead, info, settings, plan, onClose, onChange, onRemoved, onDetails, opening, onSettings }) {
+export default function Panel({ lead, info, settings, onClose, onChange, onRemoved, onSettings }) {
   const r = lead;
   const sq = seq(r);
   const st = STATUS[sq.k];
@@ -32,8 +32,9 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
   useEffect(() => { setMsg(base); setErr(''); setNota(r.note || ''); }, [r.id, step, info?.nome]); // eslint-disable-line
 
   const wa = /^\d{8,15}$/.test(info?.digits || '') ? `https://wa.me/${info.digits}?text=${encodeURIComponent(msg)}` : '';
-  const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${r.lat},${r.lng}&destination_place_id=${encodeURIComponent(r.place_id)}` : '';
-  const gm = safeUrl(info?.maps) || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(nome)}&query_place_id=${encodeURIComponent(r.place_id)}`;
+  const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${Number(r.lat)},${Number(r.lng)}` : '';
+  const busca = `https://www.google.com/search?q=${encodeURIComponent(nome + ' ' + (r.cidade || ''))}`;
+  const ig = String(info?.instagram || '').replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/^@/, '').replace(/[^A-Za-z0-9._]/g, '');
 
   async function sent() {
     const c = [...(r.contacts || [])];
@@ -76,7 +77,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
   else if (sq.k === 'aguard') nxt = `${STEP[step]} em ${sq.left} dia(s), em ${sq.next.split('-').reverse().join('/')}.`;
   else if (sq.k === 'novo') nxt = 'Ainda não recebeu mensagem.';
 
-  const foto = safeUrl(info?.foto) || safeUrl(r.photo_url);
+  const foto = safeUrl(r.photo_url);
   const h = hash(r.segmento || '');
 
   return (
@@ -87,35 +88,28 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
             <span className={s.ini}>{initials(info?.nome || r.segmento || '?')}</span><span className={s.sg}>{r.segmento}</span>
           </div>}
         <button className={s.x} onClick={onClose} aria-label="Fechar">×</button>
-        {!info?.foto && <button className={s.addph} onClick={addPhoto}>{r.photo_url ? 'Trocar foto' : 'Adicionar foto'}</button>}
-        {info?.foto && info.foto_autor?.length > 0 && <span className={s.credit}>Foto: {info.foto_autor.map(a => a.nome).join(', ')} · Google</span>}
+        <button className={s.addph} onClick={addPhoto}>{r.photo_url ? 'Trocar foto' : 'Adicionar foto'}</button>
       </div>
       <div className={s.pb}>
         <h2>{nome}</h2>
         <div className={s.rt}>
-          {info?.nota != null && <><b>{Number(info.nota).toFixed(1).replace('.', ',')}</b><span className={s.stars}>{'★★★★★'.slice(0, Math.round(info.nota))}</span><span>({info.aval})</span><span>·</span></>}
-          <span>{r.segmento}</span>
+            <span>{r.segmento}</span>
         </div>
         <span className="pill" style={{ background: st.bg, color: st.color, marginTop: 10 }}>{st.label}</span>
 
-        {!info && (
-          <div className={s.unlock}>
-            <p>Para ver nome, telefone e foto, abra o contato. Isso usa 1 dos seus {plan.details} contatos do mês.</p>
-            <button className="btn" onClick={onDetails} disabled={opening}>{opening ? 'Abrindo…' : 'Abrir contato'}</button>
-          </div>
-        )}
-
-        {info && <>
+        {<>
           <div className={s.acts}>
             <a className={s.wa + (wa && !closed ? '' : ' ' + s.off)} href={wa || undefined} target="_blank" rel="noopener" onClick={() => wa && !closed && sent()}><span className={s.c}>{I.wa}</span>WhatsApp</a>
             <a className={info.digits ? '' : s.off} href={info.digits ? 'tel:+' + info.digits : undefined}><span className={s.c}>{I.tel}</span>Ligar</a>
             <a className={rota ? '' : s.off} href={rota || undefined} target="_blank" rel="noopener"><span className={s.c}>{I.route}</span>Rota</a>
-            <a href={gm} target="_blank" rel="noopener"><span className={s.c}>{I.maps}</span>No Google</a>
+            <a href={busca} target="_blank" rel="noopener"><span className={s.c}>{I.maps}</span>Pesquisar</a>
           </div>
           <ul className={s.info}>
             <li>{I.pin}<span>{info.endereco || r.cidade}</span></li>
-            <li>{I.tel}<span>{info.telefone || 'Sem telefone no Google'}{info.celular === false ? ' · parece fixo' : ''}</span></li>
-            <li>{I.web}<span className={info.site ? '' : s.warn}>{safeUrl(info.site) ? <a href={safeUrl(info.site)} target="_blank" rel="noopener nofollow">{info.site.replace(/^https?:\/\//, '').slice(0, 40)}</a> : 'Sem site no Google'}</span></li>
+            <li>{I.tel}<span>{info.telefone || 'Sem telefone cadastrado'}{info.celular === false ? ' · parece fixo' : ''}</span></li>
+            <li>{I.web}<span className={info.site ? '' : s.warn}>{safeUrl(info.site) ? <a href={safeUrl(info.site)} target="_blank" rel="noopener nofollow">{info.site.replace(/^https?:\/\//, '').slice(0, 40)}</a> : 'Nenhum site cadastrado'}</span></li>
+            {ig && <li>{I.web}<span><a href={`https://instagram.com/${ig}`} target="_blank" rel="noopener nofollow">@{ig}</a></span></li>}
+            {info.horario && <li>{I.pin}<span>Horário: {info.horario}</span></li>}
           </ul>
         </>}
 
@@ -129,9 +123,9 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
             <button className="btn ghost sm" onClick={() => setMsg(base)}>Voltar ao texto padrão</button>
           </div>
           {err && <p className="err" style={{ marginTop: 6 }}>{err}</p>}
-          {info && (info.digits
+          {(info.digits
             ? <a className={'btn wa ' + s.send + (closed ? ' ' + s.off : '')} href={wa} target="_blank" rel="noopener" onClick={() => !closed && sent()}><span style={{ width: 20, height: 20, display: 'inline-flex' }}>{I.wa}</span>Enviar no WhatsApp</a>
-            : <p className={s.h} style={{ marginTop: 10 }}>Esse negócio não tem telefone no Google.</p>)}
+            : <p className={s.h} style={{ marginTop: 10 }}>Esse negócio não tem telefone cadastrado. Use “Pesquisar” para achar o contato ou visite o local.</p>)}
           <div className={s.ctl}>
             <select value={['conv', 'fechou', 'nao', 'fim'].includes(r.status) ? r.status : 'auto'} onChange={e => setStatus(e.target.value)} aria-label="Situação">
               <option value="auto">Automático (pelo envio)</option>
@@ -146,7 +140,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
           {(r.contacts || []).length > 0 && <p className={s.hist}>Mensagens enviadas: {r.contacts.map(d => d.split('-').reverse().join('/')).join(', ')}</p>}
           <button className={s.remove} onClick={remove}>Tirar da minha lista</button>
         </div>
-        <p className={s.src}>Dados do negócio: Google Maps. O envio é sempre manual: o botão abre a conversa e você confirma no WhatsApp.</p>
+        <p className={s.src}>Dados do negócio: © colaboradores do OpenStreetMap. Confira antes de enviar. O envio é sempre manual: o botão abre a conversa e você confirma no WhatsApp.</p>
       </div>
     </aside>
   );

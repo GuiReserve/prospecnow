@@ -17,13 +17,13 @@ export default function Privacidade() {
         <li>Os contatos que você salva, a situação de cada um, suas anotações e seus textos de mensagem.</li>
       </ul>
       <h2>Dados dos negócios mostrados no mapa</h2>
-      <p>São informações públicas de empresas obtidas pela API oficial do Google Maps (nome, endereço, telefone comercial, site, avaliações e fotos). Elas são usadas para contato comercial, com base no legítimo interesse. Seguindo as regras do Google, guardamos apenas o identificador do lugar e, por até 30 dias, a localização; o restante é consultado de novo quando o contato é aberto.</p>
+      <p>São informações públicas de empresas do OpenStreetMap (nome, endereço, telefone comercial, site, Instagram e horário), com licença aberta ODbL. Elas são usadas para contato comercial, com base no legítimo interesse, e ficam guardadas só na lista de quem fez a varredura.</p>
       <h2>Pedir para sair</h2>
       <p>Se você é dono de um negócio e não quer aparecer no ProspecNow, escreva para <a href={'mailto:' + EMAIL}>{EMAIL}</a> com o nome e o endereço do negócio. Ele será bloqueado em novas varreduras.</p>
       <h2>Seus direitos</h2>
       <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo mesmo e-mail. Ao excluir a conta, apagamos seus contatos e anotações.</p>
       <h2>Serviços usados</h2>
-      <p>Supabase (banco de dados e login), Vercel (hospedagem), Google Maps Platform (mapas e dados de lugares), Anthropic (escrita das mensagens pela IA) e Stripe (cobrança).</p>
+      <p>Supabase (banco de dados e login), Vercel (hospedagem), OpenFreeMap (desenho do mapa), OpenStreetMap, Nominatim e Overpass (dados de lugares), Anthropic (escrita das mensagens pela IA) e Stripe (cobrança).</p>
     </main>
   );
 }

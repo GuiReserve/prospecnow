@@ -7,9 +7,9 @@ import { PLANS, PAID } from '@/lib/plans';
 import s from './planos.module.css';
 
 const ITENS = {
-  essencial: ['Mapa 2D e 3D', 'Busca e adiciona negócios um a um', `${PLANS.essencial.details} contatos abertos por mês`, 'Acompanhamentos e mensagens prontas'],
-  pro: ['Tudo do Essencial', `Agente de IA com ${PLANS.pro.scans} varreduras de cidade`, `${PLANS.pro.details} contatos abertos por mês`, 'Mensagens reescritas pela IA'],
-  agencia: ['Tudo do Pro', `${PLANS.agencia.scans} varreduras de cidade`, `${PLANS.agencia.details} contatos abertos por mês`, 'Varre regiões e países inteiros']
+  essencial: ['Mapa 2D e 3D', 'Busca e adiciona negócios um a um', 'Acompanhamentos e mensagens prontas'],
+  pro: ['Tudo do Essencial', `Agente de IA com ${PLANS.pro.scans} varreduras de cidade`, 'Mensagens reescritas pela IA'],
+  agencia: ['Tudo do Pro', `${PLANS.agencia.scans} varreduras de cidade`, 'Varre regiões e países inteiros']
 };
 
 function fmt(d) { return d ? new Date(d).toLocaleDateString('pt-BR') : ''; }
@@ -57,7 +57,7 @@ export default function Planos() {
         {me.plan.id === 'trial' && <p>Você está no <b>teste grátis</b> até {fmt(me.trialEndsAt)}.</p>}
         {me.plan.id === 'expirado' && <p>Seu teste acabou. Seus contatos continuam salvos; escolha um plano para continuar.</p>}
         {pago && <p>Plano atual: <b>{me.plan.name}</b>, ativo até {fmt(me.paidUntil)}. {me.assinaturaAtiva ? 'Renova todo mês.' : 'Renovação cancelada.'}</p>}
-        <p className="muted">Este mês: {me.usage.scans}/{me.plan.scans} varreduras · {me.usage.details}/{me.plan.details} contatos abertos · {me.usage.ai}/{me.plan.ai} mensagens pela IA.</p>
+        <p className="muted">Este mês: {me.usage.scans}/{me.plan.scans} varreduras · {me.usage.ai}/{me.plan.ai} mensagens pela IA.</p>
         {pago && me.assinaturaAtiva && <button className={s.cancel} onClick={cancelar}>Cancelar renovação</button>}
       </div>
       {ok && <p className="okmsg" style={{ marginTop: 12 }}>{ok}</p>}
