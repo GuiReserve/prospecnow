@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { api, saveSettings, MOCK } from '@/lib/client';
-import { scanCity } from '@/lib/osm';
+import { scanCity, planArea } from '@/lib/osm';
 import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS } from '@/lib/plans';
 import s from './app.module.css';
 
@@ -45,7 +45,10 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
   async function planejar(e) {
     e.preventDefault(); setErr(''); setBusy(true);
     try {
-      const j = await api('/api/scan/plan', { area: area + (pais && !area.toLowerCase().includes('portugal') && pais !== 'BR' ? ', ' + PAISES.find(p => p[0] === pais)?.[1] : '') });
+      // as cidades da região saem do OpenStreetMap, no navegador, sem IA e sem custo
+      const j = MOCK
+        ? await api('/api/scan/plan', { area: area + (pais && !area.toLowerCase().includes('portugal') && pais !== 'BR' ? ', ' + PAISES.find(p => p[0] === pais)?.[1] : '') })
+        : await planArea(area.trim().slice(0, 120), pais, Math.min(left, 10));
       const cidades = (j.cidades || []).slice(0, left);
       setPlano({ ...j, cidades, pais: j.pais && /^[A-Z]{2}$/.test(j.pais) ? j.pais : pais });
       const m = {}; cidades.forEach((c, i) => { m[i] = i < Math.min(left, 3); }); setMarc(m);
@@ -95,7 +98,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
             </div>
           </div>
           {err && <p className="err">{err}</p>}
-          <div className="row"><button className="btn" disabled={busy || !segs.length}>{busy ? 'O agente está planejando…' : 'Planejar com o agente'}</button></div>
+          <div className="row"><button className="btn" disabled={busy || !segs.length}>{busy ? 'Procurando as cidades…' : 'Procurar cidades'}</button></div>
         </form>
       )}
 
