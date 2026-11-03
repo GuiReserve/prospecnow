@@ -23,7 +23,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
   const step = stepIdx(r);
   const closed = ['fechou', 'nao', 'fim', 'conv'].includes(sq.k);
   const nome = info?.nome || `${r.segmento || 'Negócio'} em ${r.cidade || ''}`;
-  const base = fillTemplate(settings['m' + step], { nome: info?.nome || '', segmento: r.segmento, cidade: r.cidade, link: settings.link, meu_nome: settings.meu_nome });
+  const base = fillTemplate(settings['m' + step], { nome: info?.nome || '', segmento: r.segmento, cidade: r.cidade, link: settings.link, meu_nome: settings.meu_nome, servico: settings.servico });
   const [msg, setMsg] = useState(base);
   const [busyAi, setBusyAi] = useState(false);
   const [err, setErr] = useState('');
@@ -122,7 +122,7 @@ export default function Panel({ lead, info, settings, plan, onClose, onChange, o
         <div className={s.sec}>
           <h3>{STEP[step]}</h3>
           <p className={s.h}>{nxt} Você pode editar antes de enviar.</p>
-          {(!settings.meu_nome || !settings.link) && <p className={s.cfg}>Coloque seu nome e o link do seu portfólio em <button type="button" onClick={onSettings}>Mensagens</button> para a mensagem sair completa.</p>}
+          {(!settings.meu_nome || !settings.servico) && <p className={s.cfg}>Coloque seu nome, o que você oferece e o link do seu trabalho em <button type="button" onClick={onSettings}>Mensagens</button> para a mensagem sair completa.</p>}
           <textarea value={msg} onChange={e => setMsg(e.target.value)} aria-label="Mensagem" />
           <div className="row" style={{ marginTop: 8 }}>
             <button className="btn ghost sm" onClick={ai} disabled={busyAi}>{I.spark && <span style={{ width: 16, height: 16, display: 'inline-flex' }}>{I.spark}</span>}{busyAi ? 'Escrevendo…' : 'Melhorar com IA'}</button>

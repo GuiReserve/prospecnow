@@ -21,7 +21,7 @@ export default function AppPage() {
   const [seg, setSeg] = useState('Todos');
   const [city, setCity] = useState('Todas');
   const [stf, setStf] = useState('todos');
-  const [semSite, setSemSite] = useState(true);
+  const [site, setSite] = useState('todos');
   const [q, setQ] = useState('');
   const [modal, setModal] = useState(null);
   const [fitKey, setFitKey] = useState(0);
@@ -57,12 +57,13 @@ export default function AppPage() {
     if (seg !== 'Todos' && l.segmento !== seg) return false;
     if (city !== 'Todas' && l.cidade !== city) return false;
     const k = seq(l).k;
-    if (semSite && l.sem_site === false && k === 'novo') return false;
+    if (site === 'sem' && l.sem_site === false) return false;
+    if (site === 'com' && l.sem_site !== false) return false;
     if (stf === 'hoje' && !(k === 'novo' || k === 'due')) return false;
     if (stf !== 'todos' && stf !== 'hoje' && !(k === stf || (stf === 'aguard' && k === 'due'))) return false;
     if (q) { const t = (nameOf(l) + ' ' + l.segmento + ' ' + l.cidade).toLowerCase(); if (!t.includes(q.toLowerCase())) return false; }
     return true;
-  }), [leads, seg, city, stf, semSite, q, nameOf]);
+  }), [leads, seg, city, stf, site, q, nameOf]);
   const counts = useMemo(() => {
     const c = { hoje: 0, aguard: 0, conv: 0, fechou: 0 };
     leads.forEach(l => { const k = seq(l).k; if (k === 'novo' || k === 'due') c.hoje++; if (k === 'aguard' || k === 'due') c.aguard++; if (k === 'conv') c.conv++; if (k === 'fechou') c.fechou++; });
@@ -123,7 +124,7 @@ export default function AppPage() {
             <option value="conv">Em conversa ({counts.conv})</option>
             <option value="fechou">Fechados ({counts.fechou})</option>
           </select>
-          <label className={s.check}><input type="checkbox" checked={semSite} onChange={e => setSemSite(e.target.checked)} /> Só sem site</label>
+          <select value={site} onChange={e => setSite(e.target.value)} aria-label="Site"><option value="todos">Com e sem site</option><option value="sem">Só sem site</option><option value="com">Só com site</option></select>
         </div>
       </header>
 
@@ -157,7 +158,7 @@ export default function AppPage() {
           {!visible.length && (
             <div className={s.empty}>
               <h3>{leads.length ? 'Nada neste filtro' : 'Comece pela sua primeira varredura'}</h3>
-              <p className="muted">{leads.length ? 'Mude os filtros acima.' : 'Diga uma cidade, região ou país e o agente encontra os negócios sem site para você.'}</p>
+              <p className="muted">{leads.length ? 'Mude os filtros acima.' : 'Diga uma cidade, região ou país e o agente encontra os negócios para você.'}</p>
               {!leads.length && <button className="btn" onClick={() => setModal('scan')}>Nova varredura</button>}
             </div>
           )}

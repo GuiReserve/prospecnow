@@ -27,8 +27,8 @@ export default function Home() {
       <section className={s.hero}>
         <div className={s.heroText}>
           <p className={s.kicker}>Prospecção pelo mapa</p>
-          <h1>Ache negócios sem site na sua cidade e mande a primeira mensagem hoje.</h1>
-          <p className={s.lead}>Você escolhe a cidade, a região ou o país. O agente do ProspecNow varre o Google Maps, separa quem não tem site e coloca tudo no mapa. Um clique abre o negócio, outro abre o WhatsApp com a mensagem pronta.</p>
+          <h1>Ache clientes no mapa da sua cidade e mande a primeira mensagem hoje.</h1>
+          <p className={s.lead}>Você escolhe a cidade, a região ou o país. O agente do ProspecNow varre o Google Maps, mostra quem tem ou não tem site e coloca tudo no mapa. Um clique abre o negócio, outro abre o WhatsApp com a mensagem pronta.</p>
           <div className="row">
             <Link href="/entrar?criar=1" className="btn">Começar teste grátis de 7 dias</Link>
             <a href="#planos" className="btn ghost">Ver planos</a>
@@ -48,7 +48,7 @@ export default function Home() {
               <b>Barbearia Exemplo</b>
               <span>4,8 ★★★★★ · Barbearia</span>
               <em>Ainda não contatado</em>
-              <div className={s.msg}>Olá, Barbearia Exemplo! Tudo bem? Procurei vocês no Google e não encontrei um site próprio…</div>
+              <div className={s.msg}>Olá, Barbearia Exemplo! Tudo bem? Vi vocês no Google e acho que posso ajudar…</div>
               <div className={s.waBtn}>Enviar no WhatsApp</div>
             </div>
           </div>
@@ -67,9 +67,9 @@ export default function Home() {
 
       <section className={s.section}>
         <div className={s.features}>
-          <div><h3>Só quem precisa de você</h3><p>A varredura marca quem não tem site no Google, para você focar em quem tem mais chance de fechar.</p></div>
+          <div><h3>Para qualquer serviço</h3><p>Sites, redes sociais, tráfego pago, fotografia, contabilidade: você diz o que oferece e filtra por segmento, cidade e por quem tem ou não tem site.</p></div>
           <div><h3>Painel como o do Google Maps</h3><p>Foto do lugar, nota, endereço, telefone, rota e a mensagem da etapa certa num só lugar.</p></div>
-          <div><h3>Mensagens com a sua cara</h3><p>Você define seu nome, seu link e os três textos. A IA pode reescrever cada mensagem para o segmento do negócio.</p></div>
+          <div><h3>Mensagens com a sua cara</h3><p>Você define seu nome, o que oferece, seu link e os três textos. A IA pode reescrever cada mensagem para o segmento do negócio.</p></div>
           <div><h3>Nada de disparo em massa</h3><p>Cada mensagem abre no seu WhatsApp e você aperta enviar. Isso protege seu número e segue as regras do WhatsApp.</p></div>
         </div>
       </section>

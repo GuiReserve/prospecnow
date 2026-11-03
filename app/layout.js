@@ -2,7 +2,7 @@ import './globals.css';
 
 export const metadata = {
   title: 'ProspecNow · Encontre clientes no mapa',
-  description: 'Ache negócios sem site na sua cidade, veja tudo no mapa e mande a primeira mensagem pelo WhatsApp em minutos.'
+  description: 'Ache clientes para o seu serviço na sua cidade, veja tudo no mapa e mande a primeira mensagem pelo WhatsApp em minutos.'
 };
 
 export const viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover', themeColor: '#0B0F14' };

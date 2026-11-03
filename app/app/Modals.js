@@ -117,7 +117,7 @@ export function ScanModal({ me, onClose, onResults, onUpgrade }) {
           {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n})</p>}
           <div className={s.prog}><i style={{ width: `${Math.round(((prog.done ? prog.n : prog.i) / prog.n) * 100)}%` }} /></div>
           <ul className={s.resumo}>
-            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios, {r.semSite} sem site</>}</li>)}
+            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios ({r.semSite} sem site)</>}</li>)}
           </ul>
           {prog.done && <div className="row"><button className="btn" onClick={onClose}>Ver no mapa</button></div>}
         </div>
@@ -192,14 +192,15 @@ export function SettingsModal({ settings, onClose, onSaved }) {
       <form onSubmit={save} style={{ display: 'grid', gap: 12 }}>
         <div className={s.grid2}>
           <div className="field"><label htmlFor="mn">Seu nome</label><input id="mn" {...f('meu_nome')} placeholder="Ex.: Guilherme Torres" /></div>
-          <div className="field"><label htmlFor="ml">Link do seu portfólio</label><input id="ml" {...f('link')} placeholder="https://..." /></div>
+          <div className="field"><label htmlFor="ml">Link do seu trabalho</label><input id="ml" {...f('link')} placeholder="https://... (portfólio, Instagram)" /></div>
         </div>
-        <p className={s.h}>Use {'{nome}'}, {'{segmento}'}, {'{cidade}'}, {'{link}'} e {'{meu_nome}'}. O 1º acompanhamento sai 4 dias depois do primeiro contato, e o último, 7 dias depois do segundo.</p>
+        <div className="field"><label htmlFor="sv">O que você oferece</label><input id="sv" {...f('servico')} placeholder="Ex.: criação de sites, gestão de Instagram, tráfego pago, fotografia" /></div>
+        <p className={s.h}>Use {'{nome}'}, {'{segmento}'}, {'{cidade}'}, {'{link}'}, {'{meu_nome}'} e {'{servico}'}. O 1º acompanhamento sai 4 dias depois do primeiro contato, e o último, 7 dias depois do segundo.</p>
         <div className="field"><label htmlFor="m0">Primeiro contato</label><textarea id="m0" {...f('m0')} /></div>
         <div className="field"><label htmlFor="m1">1º acompanhamento</label><textarea id="m1" {...f('m1')} /></div>
         <div className="field"><label htmlFor="m2">Último acompanhamento</label><textarea id="m2" {...f('m2')} /></div>
         {err && <p className="err">{err}</p>}{ok && <p className="okmsg">{ok}</p>}
-        <div className="row"><button className="btn">Salvar</button><button type="button" className="btn ghost" onClick={() => setV({ ...DEFAULT_SETTINGS, meu_nome: v.meu_nome, link: v.link })}>Voltar aos textos originais</button></div>
+        <div className="row"><button className="btn">Salvar</button><button type="button" className="btn ghost" onClick={() => setV({ ...DEFAULT_SETTINGS, meu_nome: v.meu_nome, link: v.link, servico: v.servico })}>Voltar aos textos originais</button></div>
       </form>
     </Modal>
   );
