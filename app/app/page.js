@@ -39,10 +39,22 @@ export default function AppPage() {
         if (!data.session) { router.replace('/entrar'); return; }
       }
       try {
-        await loadMe();
+        try { await loadMe(); }
+        catch (e) {
+          if (e.status !== 401 || MOCK) throw e;
+          // login pode ter vencido: renova uma vez e tenta de novo
+          await supabase().auth.refreshSession().catch(() => {});
+          await loadMe();
+        }
         setLeads(await listLeads());
         setFitKey(k => k + 1);
-      } catch (e) { if (e.status === 401) router.replace('/entrar'); else setToast(e.message); }
+      } catch (e) {
+        if (e.status === 401) {
+          // encerra a sessão daqui para o /entrar não mandar de volta para o /app (laço)
+          await supabase().auth.signOut().catch(() => {});
+          router.replace('/entrar?erro=' + encodeURIComponent(e.message));
+        } else setToast(e.message);
+      }
     })();
   }, [router, loadMe]);
 

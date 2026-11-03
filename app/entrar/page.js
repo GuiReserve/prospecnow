@@ -13,7 +13,7 @@ function Form() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [msg, setMsg] = useState('');
-  const [err, setErr] = useState('');
+  const [err, setErr] = useState(sp.get('erro') || '');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
