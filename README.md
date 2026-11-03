@@ -8,7 +8,7 @@ Feito com Next.js (Vercel), Supabase (login e banco), Asaas (cobrança), MapLibr
 
 ## Configurar
 
-1. **Supabase:** no SQL Editor, rode `supabase/prospecnow.sql` inteiro. No fim aparece um **token**: guarde para o passo 3.
+1. **Supabase:** no SQL Editor, rode `supabase/prospecnow.sql` inteiro (bancos criados antes: rode também `supabase/semana.sql`). No fim aparece um **token**: guarde para o passo 3.
    Em Authentication > URL Configuration: Site URL `https://SEU-SITE` e Redirect URL `https://SEU-SITE/**`.
 2. **Vercel (Environment Variables):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (chave publishable), `NEXT_PUBLIC_SITE_URL`, `ASAAS_ENV` (`sandbox` ou `production`) e `ASAAS_API_KEY` (marque como Sensitive).
 3. **Asaas:** em Integrações > Webhooks, URL `https://SEU-SITE/api/billing/webhook`, cole o token do passo 1 em "Token de autenticação" e marque os eventos de Cobranças e de Assinaturas.
@@ -17,7 +17,7 @@ Feito com Next.js (Vercel), Supabase (login e banco), Asaas (cobrança), MapLibr
 
 | Plano | Preço | Varreduras de cidade por mês |
 |---|---|---|
-| Teste (7 dias) | grátis | 3 |
+| 7 dias (pagamento único, não renova) | R$ 10 | 5 |
 | Essencial | R$ 29 | busca manual |
 | Pro | R$ 67 | 20 |
 | Agência | R$ 147 | 60 |

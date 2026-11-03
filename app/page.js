@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { PLANS, PAID, ITENS, TRIAL_DAYS } from '@/lib/plans';
+import { PLANS, PAID, ITENS, SEMANA } from '@/lib/plans';
 import s from './landing.module.css';
 
 export default function Home() {
@@ -14,7 +14,7 @@ export default function Home() {
         </nav>
         <div className="row">
           <Link href="/entrar" className="btn ghost sm">Entrar</Link>
-          <Link href="/entrar?criar=1" className="btn sm">Testar {TRIAL_DAYS} dias grátis</Link>
+          <Link href="/entrar?criar=1" className="btn sm">{SEMANA.dias} dias por R$ {SEMANA.price}</Link>
         </div>
       </header>
 
@@ -24,10 +24,10 @@ export default function Home() {
           <h1>Ache clientes no mapa da sua cidade e mande a primeira mensagem hoje.</h1>
           <p className={s.lead}>Você escolhe a cidade, a região ou o país. O ProspecNow varre o mapa, mostra quem tem telefone e quem não tem site e coloca tudo no mapa. Um clique abre o negócio, outro abre o WhatsApp com a mensagem pronta.</p>
           <div className="row">
-            <Link href="/entrar?criar=1" className="btn">Começar teste grátis de {TRIAL_DAYS} dias</Link>
+            <Link href="/entrar?criar=1" className="btn">Testar {SEMANA.dias} dias por R$ {SEMANA.price}</Link>
             <a href="#planos" className="btn ghost">Ver planos</a>
           </div>
-          <p className={s.note}>Sem cartão para testar. O envio é sempre feito por você, uma conversa por vez.</p>
+          <p className={s.note}>Pagamento único por PIX, boleto ou cartão, sem renovação automática. O envio é sempre feito por você, uma conversa por vez.</p>
         </div>
         <div className={s.shot} aria-label="Ilustração do ProspecNow">
           <div className={s.mapArt}>
@@ -70,7 +70,7 @@ export default function Home() {
 
       <section id="planos" className={s.section}>
         <h2>Planos</h2>
-        <p className="muted">Todos começam com {TRIAL_DAYS} dias grátis, sem cartão. Depois, pague por PIX, boleto ou cartão.</p>
+        <p className="muted">Comece com {SEMANA.dias} dias por R$ {SEMANA.price} ({SEMANA.scans} cidades, pagamento único, não renova). Depois, escolha um plano mensal. Pague por PIX, boleto ou cartão.</p>
         <div className={s.plans}>
           {PAID.map(id => {
             const p = PLANS[id], destaque = id === 'pro';
@@ -80,7 +80,7 @@ export default function Home() {
                 <h3>{p.name}</h3>
                 <p className={s.price}><b>R$ {p.price}</b>/mês</p>
                 <ul>{ITENS[id].map(t => <li key={t}>{t}</li>)}</ul>
-                <Link href="/entrar?criar=1" className={'btn ' + (destaque ? '' : 'ghost')}>Testar grátis</Link>
+                <Link href="/entrar?criar=1" className={'btn ' + (destaque ? '' : 'ghost')}>Começar</Link>
               </div>
             );
           })}
@@ -93,7 +93,7 @@ export default function Home() {
         <div className={s.faq}>
           <details><summary>De onde vêm os dados?</summary><p>Do OpenStreetMap, o mapa aberto e colaborativo usado por milhares de apps. São dados públicos de empresas. Alguns negócios não têm telefone ou site cadastrado; o ProspecNow mostra primeiro quem tem telefone e deixa um botão para pesquisar o resto.</p></details>
           <details><summary>O ProspecNow manda mensagens sozinho?</summary><p>Não. O botão abre a conversa no seu WhatsApp com o texto pronto, e você decide se envia. Disparo em massa pode bloquear seu número.</p></details>
-          <details><summary>Como funciona o teste grátis?</summary><p>São {TRIAL_DAYS} dias com {PLANS.trial.scans} varreduras de cidade e busca manual à vontade. Não pedimos cartão. No fim, você escolhe um plano ou para de usar; seus contatos continuam salvos.</p></details>
+          <details><summary>Como funciona o começo de {SEMANA.dias} dias?</summary><p>Você paga R$ {SEMANA.price} uma vez e usa o ProspecNow por {SEMANA.dias} dias, com {SEMANA.scans} varreduras de cidade e busca manual à vontade. Não renova sozinho: no fim, você escolhe um plano mensal ou para de usar, e seus contatos continuam salvos.</p></details>
           <details><summary>Como pago? Posso cancelar?</summary><p>Pelo Asaas, com cartão, PIX ou boleto, todo mês. Você cancela quando quiser na página de planos e continua usando até o fim do mês já pago.</p></details>
           <details><summary>Meus contatos ficam salvos?</summary><p>Sim, na sua conta. Você abre de qualquer computador ou celular e ainda pode baixar uma planilha com todos eles.</p></details>
           <details><summary>E a LGPD?</summary><p>Usamos dados públicos de empresas para contato comercial. Qualquer negócio pode pedir para sair da lista pelo e-mail indicado na política de privacidade.</p></details>

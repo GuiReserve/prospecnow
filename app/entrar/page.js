@@ -26,9 +26,9 @@ function Form() {
     setBusy(true);
     try {
       if (criar) {
-        const { data, error } = await supabase().auth.signUp({ email, password: senha, options: { data: { full_name: nome }, emailRedirectTo: location.origin + '/app' } });
+        const { data, error } = await supabase().auth.signUp({ email, password: senha, options: { data: { full_name: nome }, emailRedirectTo: location.origin + '/planos' } });
         if (error) throw error;
-        if (data.session) router.push('/app');
+        if (data.session) router.push('/planos');
         else setMsg('Conta criada. Confira seu e-mail e clique no link para entrar.');
       } else {
         const { error } = await supabase().auth.signInWithPassword({ email, password: senha });
@@ -64,8 +64,8 @@ function Form() {
     <div className={s.wrap}>
       <Link href="/" className="logo"><i /><span>Prospec<b>Now</b></span></Link>
       <form className={s.box} onSubmit={submit}>
-        <h1>{criar ? 'Comece seus 7 dias grátis' : 'Entrar'}</h1>
-        <p className="muted">{criar ? 'Sem cartão. Você testa o ProspecNow com 3 varreduras de cidade.' : 'Bem-vindo de volta.'}</p>
+        <h1>{criar ? 'Crie sua conta' : 'Entrar'}</h1>
+        <p className="muted">{criar ? 'Depois, ative 7 dias por R$ 10 (pagamento único, não renova).' : 'Bem-vindo de volta.'}</p>
         <button type="button" className="btn ghost" onClick={google}>Continuar com Google</button>
         <div className={s.or}><span>ou com e-mail</span></div>
         {criar && <div className="field"><label htmlFor="nome">Seu nome</label><input id="nome" value={nome} onChange={e => setNome(e.target.value)} required autoComplete="name" /></div>}
@@ -75,7 +75,7 @@ function Form() {
         {msg && <p className="okmsg">{msg}</p>}
         <button className="btn" disabled={busy}>{busy ? 'Aguarde…' : criar ? 'Criar conta e começar' : 'Entrar'}</button>
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <button type="button" className={s.link} onClick={() => { setCriar(!criar); setErr(''); setMsg(''); }}>{criar ? 'Já tenho conta' : 'Criar conta grátis'}</button>
+          <button type="button" className={s.link} onClick={() => { setCriar(!criar); setErr(''); setMsg(''); }}>{criar ? 'Já tenho conta' : 'Criar conta'}</button>
           {!criar && <button type="button" className={s.link} onClick={esqueci}>Esqueci a senha</button>}
         </div>
         {criar && <p className={s.terms}>Ao criar a conta você concorda com os <Link href="/termos">termos</Link> e a <Link href="/privacidade">política de privacidade</Link>.</p>}

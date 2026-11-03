@@ -10,7 +10,7 @@ create table if not exists public.profiles (
   email text,
   full_name text,
   plan text not null default 'trial',
-  trial_ends_at timestamptz not null default (now() + interval '7 days'),
+  trial_ends_at timestamptz not null default now(),   -- sem teste grátis: começa com 7 dias por R$ 10
   paid_until timestamptz,
   settings jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
@@ -62,6 +62,8 @@ create index if not exists leads_user_idx on public.leads (user_id);
 create schema if not exists app_private;
 revoke all on schema app_private from public, anon, authenticated;
 create table if not exists app_private.config (k text primary key, v text not null);
+create table if not exists app_private.pagamentos (id text primary key, criado timestamptz not null default now());  -- cada pagamento conta uma vez só
+alter table public.profiles alter column trial_ends_at set default now();
 
 /* ---------------- quem pode ver e mudar o quê ---------------- */
 alter table public.profiles enable row level security;
@@ -103,7 +105,7 @@ alter table public.leads add constraint leads_foto_https check (photo_url is nul
 alter table public.leads drop constraint if exists leads_contatos_qtd;
 alter table public.leads add constraint leads_contatos_qtd check (coalesce(array_length(contacts, 1), 0) <= 20) not valid;
 
-/* ---------------- perfil criado no cadastro (7 dias de teste) ---------------- */
+/* ---------------- perfil criado no cadastro ---------------- */
 create or replace function public.handle_new_user() returns trigger
 language plpgsql security definer set search_path = public as $$
 begin
@@ -121,11 +123,11 @@ on conflict (id) do nothing;
 
 /* ---------------- planos (mesmos números de lib/plans.js) ---------------- */
 create or replace function public.plano_atual(p public.profiles) returns text language sql stable as $$
-  select case when p.paid_until > now() and p.plan in ('essencial','pro','agencia') then p.plan
+  select case when p.paid_until > now() and p.plan in ('essencial','pro','agencia','semana') then p.plan
               when p.trial_ends_at > now() then 'trial' else 'expirado' end
 $$;
 create or replace function public.limite_varreduras(plano text) returns int language sql immutable as $$
-  select case plano when 'trial' then 3 when 'pro' then 20 when 'agencia' then 60 else 0 end
+  select case plano when 'trial' then 3 when 'semana' then 5 when 'pro' then 20 when 'agencia' then 60 else 0 end
 $$;
 
 -- gasta 1 varredura (1 cidade) do mês, se o plano permitir
@@ -152,7 +154,7 @@ declare uid uuid := auth.uid(); pr public.profiles; ja int; n int;
 begin
   if uid is null then raise exception 'Faça login de novo.'; end if;
   select * into pr from public.profiles where id = uid;
-  if public.plano_atual(pr) = 'expirado' then raise exception 'Seu teste acabou. Escolha um plano para salvar novos contatos.'; end if;
+  if public.plano_atual(pr) = 'expirado' then raise exception 'Seu acesso não está ativo. Ative 7 dias por R$ 10 ou escolha um plano.'; end if;
   if jsonb_typeof(p_rows) is distinct from 'array' then raise exception 'Formato inválido.'; end if;
   select count(*) into ja from public.leads where user_id = uid;
   insert into public.leads (user_id, place_id, nome, telefone, digits, site, endereco, instagram, horario, segmento, cidade, pais, lat, lng, sem_site, status, contacts, note)
@@ -177,7 +179,7 @@ create or replace function public.registrar_link(p_link text, p_plano text) retu
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'Faça login de novo.'; end if;
-  if p_plano not in ('essencial','pro','agencia') or p_link !~ '^[A-Za-z0-9_-]{4,100}$' then raise exception 'Dados inválidos.'; end if;
+  if p_plano not in ('essencial','pro','agencia','semana') or p_link !~ '^[A-Za-z0-9_-]{4,100}$' then raise exception 'Dados inválidos.'; end if;
   update public.profiles set asaas_link_id = p_link, asaas_link_plan = p_plano where id = auth.uid();
 end $$;
 
@@ -197,6 +199,11 @@ begin
     raise exception 'não autorizado' using errcode = '28000';
   end if;
   if p_evento in ('PAYMENT_CONFIRMED', 'PAYMENT_RECEIVED') and p_pag is not null then
+    -- no cartão chegam CONFIRMED e, semanas depois, RECEIVED do mesmo pagamento: só o primeiro vale
+    if p_pag->>'id' is not null then
+      insert into app_private.pagamentos (id) values (p_pag->>'id') on conflict do nothing;
+      if not found then return json_build_object('ok', true, 'repetido', true); end if;
+    end if;
     if p_pag->>'subscription' is not null then
       select * into pr from public.profiles where asaas_subscription_id = p_pag->>'subscription' limit 1;
     end if;
@@ -204,12 +211,16 @@ begin
       select * into pr from public.profiles where asaas_link_id = p_pag->>'paymentLink' limit 1;
     end if;
     if pr.id is null then return json_build_object('ok', true, 'achou', false); end if;
-    pl := case when pr.asaas_link_plan in ('essencial','pro','agencia') then pr.asaas_link_plan else pr.plan end;
-    if pl not in ('essencial','pro','agencia') then return json_build_object('ok', true, 'achou', false); end if;
+    pl := case when pr.asaas_link_plan in ('essencial','pro','agencia','semana') then pr.asaas_link_plan else pr.plan end;
+    if pl not in ('essencial','pro','agencia','semana') then return json_build_object('ok', true, 'achou', false); end if;
+    if pl = 'semana' then   -- 7 dias, pagamento único
+      update public.profiles set plan = 'semana', paid_until = greatest(coalesce(paid_until, now()), now()) + interval '7 days' where id = pr.id;
+      return json_build_object('ok', true, 'achou', true);
+    end if;
     if p_pag->>'subscription' is not null and pr.asaas_subscription_id is not null and pr.asaas_subscription_id <> p_pag->>'subscription' then
       antiga := pr.asaas_subscription_id;   -- troca de plano: o site encerra a assinatura anterior
     end if;
-    update public.profiles set plan = pl, asaas_status = 'active', paid_until = now() + interval '33 days',
+    update public.profiles set plan = pl, asaas_status = 'active', paid_until = greatest(coalesce(paid_until, now()), now()) + interval '31 days',
       asaas_subscription_id = coalesce(p_pag->>'subscription', asaas_subscription_id)
     where id = pr.id;
     return json_build_object('ok', true, 'achou', true, 'cancelar', antiga);

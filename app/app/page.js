@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { listLeads, addLeads, seq, STATUS, infoOf, loadAccount, supabase, migrarContatosLocais, exportCsv } from '@/lib/client';
 import dynamic from 'next/dynamic';
+import { PAID as PAID_IDS } from '@/lib/plans';
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
 const hasMap = true;
 import Panel from './Panel';
@@ -126,10 +127,10 @@ export default function AppPage() {
 
       <div className={s.right}>
         <div className={s.planBox}>
-          <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}</span>
+          <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}{p.id === 'semana' ? ` · até ${new Date(acc.profile.paid_until).toLocaleDateString('pt-BR')}` : ''}</span>
           {p.scans > 0 && <span>Varreduras {Math.min(acc.usado, p.scans)}/{p.scans}</span>}
           <span>Contatos {leads.length}</span>
-          <Link href="/planos" className={s.planLink}>{p.id === 'trial' || p.id === 'expirado' ? 'Assinar' : 'Plano'}</Link>
+          <Link href="/planos" className={s.planLink}>{p.id === 'expirado' ? 'Ativar' : PAID_IDS.includes(p.id) ? 'Plano' : 'Assinar'}</Link>
         </div>
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn sm" onClick={() => setModal('scan')}>Nova varredura</button>
@@ -146,7 +147,7 @@ export default function AppPage() {
         )}
       </div>
 
-      {p.id === 'expirado' && <div className={s.banner}>Seu teste acabou. Seus contatos continuam salvos. <Link href="/planos">Escolha um plano</Link> para fazer novas varreduras e buscas.</div>}
+      {p.id === 'expirado' && <div className={s.banner}>Seu acesso não está ativo. Seus contatos continuam salvos. <Link href="/planos">Ative 7 dias por R$ 10</Link> ou escolha um plano para fazer varreduras e buscas.</div>}
 
       {view === 'lista' && <div className={s.listHead} />}
       {view === 'lista' && (

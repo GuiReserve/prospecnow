@@ -9,7 +9,8 @@ export async function POST(req) {
   if (u.error) return u.error;
   const b = await req.json().catch(() => ({}));
   const plan = PLANS[b.plan];
-  if (!plan || !PAID.includes(plan.id)) return fail('Plano inválido.');
+  if (!plan || !(PAID.includes(plan.id) || plan.id === 'semana')) return fail('Plano inválido.');
+  if (plan.id === 'semana' && u.profile.paid_until && new Date(u.profile.paid_until) > new Date() && PAID.includes(u.profile.plan)) return fail('Você já tem um plano mensal ativo.');
   if (!process.env.ASAAS_API_KEY) return fail('Os pagamentos ainda não foram ativados. Tente mais tarde.', 503);
   const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
   try {

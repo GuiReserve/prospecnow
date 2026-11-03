@@ -34,7 +34,7 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
 
   if (acc.plan.scans === 0 || left === 0) return (
     <Modal title="Varredura automática" onClose={onClose}>
-      <p className="muted">{acc.plan.id === 'expirado' ? 'Seu teste acabou. Escolha um plano para voltar a varrer cidades.'
+      <p className="muted">{acc.plan.id === 'expirado' ? 'Seu acesso não está ativo. Ative 7 dias por R$ 10 ou escolha um plano para varrer cidades.'
         : acc.plan.scans === 0 ? 'A varredura automática de cidades está nos planos Pro e Agência. No seu plano, você busca e adiciona negócios um a um.'
         : `Você já usou as ${acc.plan.scans} varreduras do mês no plano ${acc.plan.name}. Elas voltam no dia 1º, ou você pode mudar de plano.`}</p>
       <div className="row" style={{ marginTop: 16 }}><button className="btn" onClick={onUpgrade}>Ver planos</button></div>
@@ -153,7 +153,7 @@ export function AddModal({ acc, onClose, onAdded, onUpgrade }) {
   const [added, setAdded] = useState({});
   if (acc.plan.id === 'expirado') return (
     <Modal title="Adicionar negócio" onClose={onClose}>
-      <p className="muted">Seu teste acabou. Escolha um plano para buscar e salvar novos negócios.</p>
+      <p className="muted">Seu acesso não está ativo. Ative 7 dias por R$ 10 ou escolha um plano para buscar e salvar negócios.</p>
       <div className="row" style={{ marginTop: 16 }}><button className="btn" onClick={onUpgrade}>Ver planos</button></div>
     </Modal>
   );
