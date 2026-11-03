@@ -126,6 +126,9 @@ create or replace function public.plano_atual(p public.profiles) returns text la
   select case when p.paid_until > now() and p.plan in ('essencial','pro','agencia','semana') then p.plan
               when p.trial_ends_at > now() then 'trial' else 'expirado' end
 $$;
+create or replace function public.preco_plano(plano text) returns numeric language sql immutable as $$
+  select case plano when 'semana' then 10 when 'essencial' then 29 when 'pro' then 67 when 'agencia' then 147 else null end
+$$;
 create or replace function public.limite_varreduras(plano text) returns int language sql immutable as $$
   select case plano when 'trial' then 3 when 'semana' then 5 when 'pro' then 20 when 'agencia' then 60 else 0 end
 $$;
@@ -213,6 +216,10 @@ begin
     if pr.id is null then return json_build_object('ok', true, 'achou', false); end if;
     pl := case when pr.asaas_link_plan in ('essencial','pro','agencia','semana') then pr.asaas_link_plan else pr.plan end;
     if pl not in ('essencial','pro','agencia','semana') then return json_build_object('ok', true, 'achou', false); end if;
+    -- o valor pago (vindo da API do Asaas) precisa cobrir o preço do plano
+    if coalesce(nullif(p_pag->>'value', '')::numeric, 0) < public.preco_plano(pl) then
+      return json_build_object('ok', true, 'achou', true, 'valor_insuficiente', true);
+    end if;
     if pl = 'semana' then   -- 7 dias, pagamento único
       update public.profiles set plan = 'semana', paid_until = greatest(coalesce(paid_until, now()), now()) + interval '7 days' where id = pr.id;
       return json_build_object('ok', true, 'achou', true);
@@ -231,6 +238,13 @@ begin
   return json_build_object('ok', true);
 end $$;
 
+-- o site confere o token antes de consultar a API do Asaas
+create or replace function public.asaas_token_ok(p_token text) returns boolean
+language sql security definer stable set search_path = public, extensions as $$
+  select exists (select 1 from app_private.config where k = 'asaas_webhook_hash' and p_token is not null
+                 and v = encode(extensions.digest(p_token, 'sha256'), 'hex'))
+$$;
+
 create or replace function app_private.novo_token_webhook() returns text
 language plpgsql set search_path = public, extensions as $$
 declare t text := encode(extensions.gen_random_bytes(24), 'hex');
@@ -246,6 +260,8 @@ revoke execute on function public.usar_varredura(), public.salvar_contatos(jsonb
 grant execute on function public.usar_varredura(), public.salvar_contatos(jsonb), public.registrar_link(text, text), public.marcar_cancelando() to authenticated;
 revoke execute on function public.asaas_evento(text, text, jsonb, jsonb) from public;
 grant execute on function public.asaas_evento(text, text, jsonb, jsonb) to anon, authenticated;
+revoke execute on function public.asaas_token_ok(text) from public;
+grant execute on function public.asaas_token_ok(text) to anon, authenticated;
 revoke execute on function app_private.novo_token_webhook() from public, anon, authenticated;
 drop function if exists public.bump_usage(uuid, text, text, int, int);
 
