@@ -1,7 +1,8 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { listLeads, addLeads, seq, STATUS, loadSettings, infoOf } from '@/lib/client';
+import { useRouter } from 'next/navigation';
+import { listLeads, addLeads, seq, STATUS, infoOf, loadAccount, supabase, migrarContatosLocais, exportCsv } from '@/lib/client';
 import dynamic from 'next/dynamic';
 const MapView = dynamic(() => import('./MapView'), { ssr: false });
 const hasMap = true;
@@ -10,8 +11,9 @@ import { ScanModal, AddModal, SettingsModal } from './Modals';
 import s from './app.module.css';
 
 export default function AppPage() {
-  const [ready, setReady] = useState(false);
-  const [settings, setSettings] = useState(null);
+  const router = useRouter();
+  const [acc, setAcc] = useState(null);
+  const [loadErr, setLoadErr] = useState('');
   const [leads, setLeads] = useState([]);
   const [sel, setSel] = useState(null);
   const [view, setView] = useState(hasMap ? 'mapa' : 'lista');
@@ -25,13 +27,23 @@ export default function AppPage() {
   const [fitKey, setFitKey] = useState(0);
   const [toast, setToast] = useState('');
 
-  // tudo fica salvo neste navegador: não há conta nem servidor guardando os contatos
+  const recarregarConta = useCallback(async () => setAcc(await loadAccount()), []);
+
   useEffect(() => {
-    setSettings(loadSettings());
-    setLeads(listLeads());
-    setFitKey(k => k + 1);
-    setReady(true);
-  }, []);
+    (async () => {
+      try {
+        const a = await loadAccount();
+        setAcc(a);
+        const n = await migrarContatosLocais().catch(() => 0);
+        if (n) setToast(`${n} contato(s) salvos neste navegador foram levados para a sua conta.`);
+        setLeads(await listLeads());
+        setFitKey(k => k + 1);
+      } catch (e) {
+        if (e.status === 401) { supabase().auth.signOut().catch(() => {}); router.replace('/entrar'); }
+        else setLoadErr(e.message || 'Não consegui carregar.');
+      }
+    })();
+  }, [router]);
 
   useEffect(() => { if (!toast) return; const t = setTimeout(() => setToast(''), 5000); return () => clearTimeout(t); }, [toast]);
 
@@ -60,12 +72,27 @@ export default function AppPage() {
   const selLead = leads.find(l => l.id === sel) || null;
   const pick = useCallback(l => setSel(l.id), []);
 
-  function onResults(results) {
-    try { const r = addLeads(results); setLeads(r.leads); setFitKey(k => k + 1); }
+  async function onResults(results) {
+    try { await addLeads(results); setLeads(await listLeads()); setFitKey(k => k + 1); }
     catch (e) { setToast(e.message); }
   }
+  async function sair() { await supabase().auth.signOut().catch(() => {}); router.push('/'); }
 
-  if (!ready) return <div className={s.loading}>Carregando…</div>;
+  if (!acc) return (
+    <div className={s.loading}>
+      {loadErr ? (
+        <div style={{ textAlign: 'center', display: 'grid', gap: 12, maxWidth: 380, padding: 16 }}>
+          <p className="err">{loadErr}</p>
+          <div className="row" style={{ justifyContent: 'center' }}>
+            <button className="btn sm" onClick={() => location.reload()}>Tentar de novo</button>
+            <button className="btn ghost sm" onClick={sair}>Sair</button>
+          </div>
+        </div>
+      ) : 'Carregando…'}
+    </div>
+  );
+  const p = acc.plan, settings = acc.settings;
+  const dias = Math.max(0, Math.ceil((new Date(acc.profile.trial_ends_at) - new Date()) / 864e5));
 
   return (
     <div className={s.app}>
@@ -99,14 +126,17 @@ export default function AppPage() {
 
       <div className={s.right}>
         <div className={s.planBox}>
-          <span className={s.planName}>Seus contatos: {leads.length}</span>
-          <span>Ficam salvos neste navegador</span>
+          <span className={s.planName}>{p.name}{p.id === 'trial' ? ` · ${dias} dia(s)` : ''}</span>
+          {p.scans > 0 && <span>Varreduras {Math.min(acc.usado, p.scans)}/{p.scans}</span>}
+          <span>Contatos {leads.length}</span>
+          <Link href="/planos" className={s.planLink}>{p.id === 'trial' || p.id === 'expirado' ? 'Assinar' : 'Plano'}</Link>
         </div>
         <div className="row" style={{ justifyContent: 'flex-end' }}>
           <button className="btn sm" onClick={() => setModal('scan')}>Nova varredura</button>
           <button className="btn ghost sm" onClick={() => setModal('add')}>Adicionar negócio</button>
           <button className="btn ghost sm" onClick={() => setModal('settings')}>Mensagens</button>
-          <Link href="/" className="btn ghost sm">Início</Link>
+          <button className="btn ghost sm" onClick={() => exportCsv(leads)} disabled={!leads.length}>Planilha</button>
+          <button className="btn ghost sm" onClick={sair}>Sair</button>
         </div>
         {view === 'mapa' && hasMap && (
           <div className={s.viewBtns} role="group" aria-label="Modo do mapa">
@@ -115,6 +145,8 @@ export default function AppPage() {
           </div>
         )}
       </div>
+
+      {p.id === 'expirado' && <div className={s.banner}>Seu teste acabou. Seus contatos continuam salvos. <Link href="/planos">Escolha um plano</Link> para fazer novas varreduras e buscas.</div>}
 
       {view === 'lista' && <div className={s.listHead} />}
       {view === 'lista' && (
@@ -148,9 +180,9 @@ export default function AppPage() {
       {selLead && <Panel lead={selLead} info={infoOf(selLead)} settings={settings}
         onClose={() => setSel(null)} onChange={l => setLeads(v => v.map(x => x.id === l.id ? l : x))} onRemoved={id => { setLeads(v => v.filter(x => x.id !== id)); setSel(null); }} onSettings={() => setModal('settings')} />}
 
-      {modal === 'scan' && <ScanModal onClose={() => setModal(null)} onResults={onResults} />}
-      {modal === 'add' && <AddModal onClose={() => setModal(null)} onAdded={r => onResults([r])} />}
-      {modal === 'settings' && <SettingsModal settings={settings} onClose={() => setModal(null)} onSaved={v => setSettings(v)} onImported={() => { setLeads(listLeads()); setSettings(loadSettings()); setFitKey(k => k + 1); }} />}
+      {modal === 'scan' && <ScanModal acc={acc} onClose={() => { setModal(null); recarregarConta().catch(() => {}); }} onResults={onResults} onUpgrade={() => router.push('/planos')} />}
+      {modal === 'add' && <AddModal acc={acc} onClose={() => setModal(null)} onAdded={r => onResults([r])} onUpgrade={() => router.push('/planos')} />}
+      {modal === 'settings' && <SettingsModal settings={settings} onClose={() => setModal(null)} onSaved={v => setAcc(a => ({ ...a, settings: v }))} />}
       {toast && <div className={s.toast} role="status">{toast}</div>}
     </div>
   );

@@ -17,10 +17,10 @@ export default function Termos() {
         <li>Respeite quem pedir para não receber mais mensagens.</li>
         <li>Não revenda nem exporte em massa os dados mostrados no app. Os dados de negócios vêm do OpenStreetMap (licença ODbL) e devem manter a atribuição.</li>
       </ul>
-      <h2>Gratuito, em testes</h2>
-      <p>O ProspecNow está em fase de testes e é gratuito. Seus contatos ficam salvos só no seu navegador; baixe uma cópia de segurança para não perdê-los.</p>
+      <h2>Teste grátis e planos</h2>
+      <p>Novas contas têm 7 dias de teste com os limites indicados na página de planos. Os planos pagos são mensais, cobrados pelo Asaas, e renovam até você cancelar. Ao cancelar, o acesso continua até o fim do período pago. O limite de varreduras reinicia todo mês e não acumula.</p>
       <h2>Responsabilidades</h2>
-      <p>Os dados dos negócios vêm do OpenStreetMap, um mapa colaborativo, e podem estar incompletos ou desatualizados. Confira antes de enviar. Você é responsável pelas mensagens que envia. Podemos tirar o serviço do ar a qualquer momento.</p>
+      <p>Os dados dos negócios vêm do OpenStreetMap, um mapa colaborativo, e podem estar incompletos ou desatualizados. Confira antes de enviar. Você é responsável pelas mensagens que envia. Podemos suspender contas que descumprirem estes termos.</p>
     </main>
   );
 }

@@ -1,22 +1,25 @@
 # ProspecNow
 
-Prospecção de negócios locais pelo mapa. Você diz a cidade (ou região, ou país), o app busca os negócios no OpenStreetMap, mostra tudo num mapa 2D/3D e abre o WhatsApp com a mensagem pronta, uma conversa por vez.
+Prospecção de negócios locais pelo mapa: varre cidades no OpenStreetMap, mostra tudo num mapa 2D/3D e abre o WhatsApp com a mensagem pronta, uma conversa por vez (sem disparo em massa).
 
-Sem conta, sem banco de dados e sem chaves: o site é estático e tudo roda no navegador. Os contatos ficam no armazenamento local do navegador, com opção de baixar e restaurar um backup.
+Feito com Next.js (Vercel), Supabase (login e banco), Asaas (cobrança), MapLibre + OpenFreeMap (mapa) e OpenStreetMap via Nominatim/Overpass (dados, sem chave).
 
-## Rodar
+**Não usa a chave secreta do Supabase.** As regras (quem vê o quê, limite de varreduras, liberação do plano) ficam no banco, em `supabase/prospecnow.sql`.
 
-```
-npm install
-npm run dev
-```
+## Configurar
 
-## Publicar
+1. **Supabase:** no SQL Editor, rode `supabase/prospecnow.sql` inteiro. No fim aparece um **token**: guarde para o passo 3.
+   Em Authentication > URL Configuration: Site URL `https://SEU-SITE` e Redirect URL `https://SEU-SITE/**`.
+2. **Vercel (Environment Variables):** `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (chave publishable), `NEXT_PUBLIC_SITE_URL`, `ASAAS_ENV` (`sandbox` ou `production`) e `ASAAS_API_KEY` (marque como Sensitive).
+3. **Asaas:** em Integrações > Webhooks, URL `https://SEU-SITE/api/billing/webhook`, cole o token do passo 1 em "Token de autenticação" e marque os eventos de Cobranças e de Assinaturas.
 
-Conecte o repositório na Vercel (plano gratuito serve). Não há variáveis de ambiente obrigatórias. Opcional: `NEXT_PUBLIC_CONTATO_EMAIL` para o e-mail exibido na política de privacidade.
+## Planos
 
-## Dados e mapa
+| Plano | Preço | Varreduras de cidade por mês |
+|---|---|---|
+| Teste (7 dias) | grátis | 3 |
+| Essencial | R$ 29 | busca manual |
+| Pro | R$ 67 | 20 |
+| Agência | R$ 147 | 60 |
 
-- Mapa: OpenFreeMap (MapLibre). Dados: © colaboradores do OpenStreetMap (licença ODbL), via Nominatim (cidades e busca por nome) e Overpass (negócios).
-- As consultas saem do navegador de quem usa, porque os servidores públicos bloqueiam a nuvem. Eles têm limite de uso justo; em caso de muito volume, dá para apontar para um servidor Overpass próprio em `lib/osm.js`.
-- O envio de mensagens é sempre manual (link `wa.me`), sem disparo em massa.
+Para mudar os números, altere `lib/plans.js` e a função `limite_varreduras` no SQL.
