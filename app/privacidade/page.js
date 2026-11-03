@@ -13,7 +13,7 @@ export default function Privacidade() {
       <h2>Dados de quem usa o ProspecNow</h2>
       <ul>
         <li>Nome, e-mail e senha (guardada com criptografia) para criar e acessar a conta.</li>
-        <li>CPF ou CNPJ e dados de pagamento, tratados pelo Asaas para cobrar a assinatura. Não guardamos dados de cartão.</li>
+        <li>Dados de pagamento, tratados pelo Stripe para cobrar a assinatura. Não guardamos dados de cartão.</li>
         <li>Os contatos que você salva, a situação de cada um, suas anotações e seus textos de mensagem.</li>
       </ul>
       <h2>Dados dos negócios mostrados no mapa</h2>
@@ -23,7 +23,7 @@ export default function Privacidade() {
       <h2>Seus direitos</h2>
       <p>Você pode pedir acesso, correção ou exclusão dos seus dados pelo mesmo e-mail. Ao excluir a conta, apagamos seus contatos e anotações.</p>
       <h2>Serviços usados</h2>
-      <p>Supabase (banco de dados e login), Vercel (hospedagem), Google Maps Platform (mapas e dados de lugares), Anthropic (escrita das mensagens pela IA) e Asaas (cobrança).</p>
+      <p>Supabase (banco de dados e login), Vercel (hospedagem), Google Maps Platform (mapas e dados de lugares), Anthropic (escrita das mensagens pela IA) e Stripe (cobrança).</p>
     </main>
   );
 }

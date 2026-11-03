@@ -1,47 +1,51 @@
 import { session, json, fail, updateProfile, MOCK } from '@/lib/server';
-import { asaas, today } from '@/lib/asaas';
+import { stripe, priceFor } from '@/lib/stripe';
 import { PLANS, PAID } from '@/lib/plans';
 
-// Cria (ou troca) a assinatura no Asaas e devolve o link da primeira fatura.
-// O cliente escolhe Pix, boleto ou cartão na própria página do Asaas.
+// Abre o checkout do Stripe para assinar, ou troca o plano de quem já assina.
 export async function POST(req) {
   const s = await session(req);
   if (s.error) return s.error;
   const b = await req.json().catch(() => ({}));
   const plan = PLANS[b.plan];
   if (!plan || !PAID.includes(plan.id)) return fail('Plano inválido.');
-  const cpfCnpj = String(b.cpfCnpj || '').replace(/\D/g, '');
-  const nome = String(b.nome || s.profile.full_name || '').trim().slice(0, 100);
-  if (!(cpfCnpj.length === 11 || cpfCnpj.length === 14)) return fail('Informe um CPF ou CNPJ válido.');
-  if (nome.length < 3) return fail('Informe seu nome completo.');
   if (MOCK) return json({ url: '/app?pagamento=exemplo' });
 
+  const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(req.url).origin;
   try {
-    let customer = s.profile.asaas_customer_id;
-    if (!customer) {
-      const c = await asaas('/customers', { method: 'POST', body: { name: nome, email: s.user.email, cpfCnpj, externalReference: s.user.id, notificationDisabled: false } });
-      customer = c.id;
-      await updateProfile(s.user.id, { asaas_customer_id: customer, full_name: nome });
-    }
+    const price = await priceFor(plan.id);
+    const subId = s.profile.stripe_subscription_id;
     const pago = s.profile.paid_until && new Date(s.profile.paid_until) > new Date();
-    if (s.profile.asaas_subscription_id && pago) {
-      // troca de plano com assinatura em dia: muda o valor a partir da próxima fatura e libera o plano novo já
-      await asaas(`/subscriptions/${s.profile.asaas_subscription_id}`, { method: 'POST', body: { value: plan.price, description: `ProspecNow ${plan.name}`, externalReference: `${s.user.id}:${plan.id}`, updatePendingPayments: true } });
-      await updateProfile(s.user.id, { plan: plan.id });
-      return json({ url: null, trocado: true });
+
+    if (subId && pago) {
+      // troca de plano: o valor novo vale a partir da próxima cobrança e o plano novo libera já
+      const sub = await stripe().subscriptions.retrieve(subId);
+      if (sub.status === 'active' || sub.status === 'trialing') {
+        await stripe().subscriptions.update(subId, {
+          items: [{ id: sub.items.data[0].id, price }], proration_behavior: 'none',
+          cancel_at_period_end: false, metadata: { userId: s.user.id, plan: plan.id }
+        });
+        await updateProfile(s.user.id, { plan: plan.id, stripe_status: 'active' });
+        return json({ url: null, trocado: true });
+      }
     }
-    if (s.profile.asaas_subscription_id) {
-      try { await asaas(`/subscriptions/${s.profile.asaas_subscription_id}`, { method: 'DELETE' }); } catch (e) { /* já cancelada */ }
+
+    let customer = s.profile.stripe_customer_id;
+    if (!customer) {
+      const c = await stripe().customers.create({ email: s.user.email, name: s.profile.full_name || undefined, metadata: { userId: s.user.id } });
+      customer = c.id;
+      await updateProfile(s.user.id, { stripe_customer_id: customer });
     }
-    const sub = await asaas('/subscriptions', {
-      method: 'POST',
-      body: { customer, billingType: 'UNDEFINED', value: plan.price, nextDueDate: today(), cycle: 'MONTHLY', description: `ProspecNow ${plan.name}`, externalReference: `${s.user.id}:${plan.id}` }
+    const cs = await stripe().checkout.sessions.create({
+      mode: 'subscription', customer, client_reference_id: s.user.id, locale: 'pt-BR',
+      line_items: [{ price, quantity: 1 }],
+      subscription_data: { metadata: { userId: s.user.id, plan: plan.id } },
+      metadata: { userId: s.user.id, plan: plan.id },
+      success_url: `${origin}/planos?pagamento=ok`,
+      cancel_url: `${origin}/planos`
     });
-    await updateProfile(s.user.id, { asaas_subscription_id: sub.id });
-    const pays = await asaas(`/subscriptions/${sub.id}/payments`);
-    const first = (pays.data || [])[0];
-    return json({ url: first?.invoiceUrl || null });
+    return json({ url: cs.url });
   } catch (e) {
-    return fail('Não consegui criar a assinatura: ' + e.message, 502);
+    return fail('Não consegui abrir o pagamento: ' + e.message, 502);
   }
 }

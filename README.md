@@ -2,7 +2,7 @@
 
 Prospecção pelo mapa: o agente de IA varre cidades, regiões ou países no Google Maps, mostra os negócios sem site em um mapa 2D/3D e prepara a mensagem de WhatsApp de cada etapa (primeiro contato, acompanhamento em 4 dias, último em mais 7).
 
-Feito com Next.js, Supabase (login e banco), Google Maps Platform (mapa e dados), Anthropic (IA) e Asaas (cobrança).
+Feito com Next.js, Supabase (login e banco), Google Maps Platform (mapa e dados), Anthropic (IA) e Stripe (cobrança).
 
 ## Rodar sem chaves (demonstração)
 
@@ -36,11 +36,13 @@ Todas as chaves vão nas variáveis de ambiente da Vercel (Settings > Environmen
 ### 3. IA (Anthropic)
 Crie uma chave em console.anthropic.com e coloque em `ANTHROPIC_API_KEY`. Sem ela, o app funciona: o agente separa as cidades pelo texto digitado e as mensagens ficam no texto padrão.
 
-### 4. Asaas (cobrança)
-1. Crie a conta no Asaas. Comece pelo **sandbox** (`ASAAS_ENV=sandbox`) para testar.
-2. Em **Integrações > Chave de API**, gere a chave e coloque em `ASAAS_API_KEY`.
-3. Em **Integrações > Webhooks**, crie um webhook com a URL `https://SEU-SITE/api/billing/webhook`, eventos de **cobrança**, e um token de autenticação. Coloque o mesmo token em `ASAAS_WEBHOOK_TOKEN`.
-4. Quando tudo funcionar, troque para a chave de produção e `ASAAS_ENV=production`.
+### 4. Stripe (cobrança)
+1. No painel do Stripe, deixe ligado o **modo de teste**.
+2. Em **Desenvolvedores > Chaves de API**, copie a **chave secreta** (`sk_test_…`) para `STRIPE_SECRET_KEY`. Não precisa cadastrar produtos: o ProspecNow cria os preços dos planos sozinho na primeira assinatura.
+3. Em **Desenvolvedores > Webhooks**, adicione o endpoint `https://SEU-SITE/api/billing/webhook` com os eventos `invoice.paid`, `customer.subscription.updated` e `customer.subscription.deleted`. Copie o **segredo de assinatura** (`whsec_…`) para `STRIPE_WEBHOOK_SECRET`.
+4. Para testar, pague com o cartão de teste `4242 4242 4242 4242`, qualquer data futura e qualquer CVC.
+5. Se o banco foi criado antes desta mudança, rode `supabase/stripe.sql` no SQL Editor.
+6. Para cobrar de verdade, ative a conta no Stripe e troque as chaves de teste pelas de produção.
 
 ### 5. Vercel
 Importe o repositório, cadastre as variáveis e publique. O plano Hobby da Vercel é para uso não comercial; para vender, use o Pro.

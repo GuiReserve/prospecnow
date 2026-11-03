@@ -7,8 +7,9 @@ create table if not exists public.profiles (
   plan text not null default 'trial',            -- essencial | pro | agencia (o teste é calculado por trial_ends_at)
   trial_ends_at timestamptz not null default (now() + interval '7 days'),
   paid_until timestamptz,
-  asaas_customer_id text,
-  asaas_subscription_id text,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  stripe_status text,
   settings jsonb not null default '{}'::jsonb,   -- nome, link do portfólio e textos das mensagens
   created_at timestamptz not null default now()
 );
@@ -100,3 +101,8 @@ begin
   return true;
 end; $$;
 revoke execute on function public.bump_usage from public, anon, authenticated;
+
+-- colunas do Stripe (seguro rodar de novo)
+alter table public.profiles add column if not exists stripe_customer_id text;
+alter table public.profiles add column if not exists stripe_subscription_id text;
+alter table public.profiles add column if not exists stripe_status text;

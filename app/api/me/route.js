@@ -8,7 +8,7 @@ export async function GET(req) {
   const p = s.profile;
   return json({
     email: p.email, nome: p.full_name, plan: s.plan, planoContratado: p.plan,
-    trialEndsAt: p.trial_ends_at, paidUntil: p.paid_until, assinaturaAtiva: !!p.asaas_subscription_id,
+    trialEndsAt: p.trial_ends_at, paidUntil: p.paid_until, assinaturaAtiva: !!p.stripe_subscription_id && p.stripe_status !== 'canceling',
     usage, settings: { ...DEFAULT_SETTINGS, ...(p.settings || {}) }
   });
 }
