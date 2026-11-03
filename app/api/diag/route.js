@@ -1,19 +1,18 @@
-import { scanCity, searchPlaces, findArea } from '@/lib/osm';
 export const maxDuration = 60;
 // Rota temporária de teste (só no preview). Será apagada.
+const EPS = ['https://overpass-api.de/api/interpreter', 'https://overpass.private.coffee/api/interpreter', 'https://overpass.kumi.systems/api/interpreter', 'https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
 export async function GET(req) {
   const u = new URL(req.url);
   if (!process.env.DIAG_TOKEN || u.searchParams.get('t') !== process.env.DIAG_TOKEN) return new Response('no', { status: 404 });
-  const out = {};
-  const t0 = Date.now();
-  try { out.area = await findArea(u.searchParams.get('c') || 'Cajamar, SP, Brasil', 'BR'); } catch (e) { out.areaErr = e.message; }
-  try {
-    const r = await scanCity(u.searchParams.get('c') || 'Cajamar, SP, Brasil', (u.searchParams.get('s') || 'Barbearia,Pizzaria,Restaurante,Oficina mecânica,Academia').split(','), 'BR');
-    const by = {}; r.forEach(x => { by[x.segmento] = (by[x.segmento] || 0) + 1; });
-    out.scan = { total: r.length, comTelefone: r.filter(x => x.digits).length, comSite: r.filter(x => x.site).length, porSegmento: by, amostra: r.slice(0, 6).map(x => ({ id: x.place_id, nome: x.nome, seg: x.segmento, tel: x.telefone, d: x.digits, site: x.site, end: x.endereco })) };
-  } catch (e) { out.scanErr = String(e.message); }
-  out.ms1 = Date.now() - t0;
-  try { const s = await searchPlaces(u.searchParams.get('q') || 'pizzaria, Jundiaí', 'BR'); out.busca = s.slice(0, 4).map(x => ({ id: x.place_id, nome: x.nome, tel: x.telefone, cidade: x.cidade })); } catch (e) { out.buscaErr = e.message; }
-  out.ms = Date.now() - t0;
-  return Response.json(out);
+  const q = u.searchParams.get('q') || '[out:json][timeout:20];area(id:3600298462)->.a;(nwr["shop"="hairdresser"]["name"](area.a);nwr["amenity"="restaurant"]["name"](area.a);nwr["amenity"="fast_food"]["name"](area.a););out center 300;';
+  const res = await Promise.all(EPS.map(async ep => {
+    const t0 = Date.now();
+    try {
+      const r = await fetch(ep, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'ProspecNow/1.0 (+https://prospecnow.vercel.app)' }, body: 'data=' + encodeURIComponent(q), signal: AbortSignal.timeout(50000) });
+      const txt = await r.text();
+      let n = null, tel = 0; try { const j = JSON.parse(txt); n = j.elements.length; tel = j.elements.filter(e => e.tags && (e.tags.phone || e.tags['contact:phone'])).length; } catch (e) { }
+      return { ep, status: r.status, ms: Date.now() - t0, n, tel, head: n == null ? txt.slice(0, 160) : undefined };
+    } catch (e) { return { ep, err: String(e.message).slice(0, 100), ms: Date.now() - t0 }; }
+  }));
+  return Response.json(res);
 }
