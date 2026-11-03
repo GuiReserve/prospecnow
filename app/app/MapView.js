@@ -1,10 +1,11 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { pinColor, seq } from '@/lib/client';
 
 // Mapa gratuito: MapLibre + OpenFreeMap (dados © OpenStreetMap). Não precisa de chave.
+maplibregl.setWorkerUrl('/maplibre/maplibre-gl-worker.mjs');
 const STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 
 function toGeo(leads, nameOf, selectedId) {
