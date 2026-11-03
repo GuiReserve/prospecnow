@@ -4,6 +4,7 @@ import { saveSettings, usarVarredura } from '@/lib/client';
 import { scanCity, planArea, searchPlaces } from '@/lib/osm';
 import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS } from '@/lib/plans';
 import s from './app.module.css';
+import Minigame from './Minigame';
 
 const PAISES = [['BR', 'Brasil'], ['PT', 'Portugal'], ['US', 'Estados Unidos'], ['ES', 'Espanha'], ['AR', 'Argentina'], ['MX', 'México']];
 
@@ -67,12 +68,12 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
         const uso = await usarVarredura(); // o banco confere o limite do plano antes de cada cidade
         if (!uso?.ok) { resumo.push({ cidade: lista[i].cidade, erro: `Limite do mês atingido (${uso?.limite ?? 0} varreduras).` }); break; }
         const vistos = new Set();
-        const results = (await scanCity(busca, segs, plano.pais))
+        const results = (await scanCity(busca, segs, plano.pais, txt => setProg(p => p && !p.done ? { ...p, aviso: txt } : p)))
           .filter(p => p && Number.isFinite(Number(p.lat)) && Number.isFinite(Number(p.lng)) && p.place_id && !vistos.has(p.place_id) && vistos.add(p.place_id))
           .slice(0, 800)
-          .map(p => ({ ...p, segmento: segs.includes(p.segmento) ? p.segmento : segs[0], cidade: lista[i].cidade, pais: plano.pais }));
+          .map(({ cidadeReal, ...p }) => ({ ...p, segmento: segs.includes(p.segmento) ? p.segmento : segs[0], cidade: cidadeReal || lista[i].cidade, pais: plano.pais }));
         const novos = results.length ? await onResults(results) : 0;
-        resumo.push({ cidade: lista[i].cidade, total: results.length, novos, comTelefone: results.filter(r => r.digits).length, semSite: results.filter(r => !r.site).length });
+        resumo.push({ cidade: lista[i].cidade, total: results.length, novos, vizinhas: results.filter(r => r.cidade !== lista[i].cidade).length, comTelefone: results.filter(r => r.digits).length, semSite: results.filter(r => !r.site).length });
       } catch (e2) {
         resumo.push({ cidade: lista[i].cidade, erro: e2.message });
       }
@@ -124,11 +125,12 @@ export function ScanModal({ acc, onClose, onResults, onUpgrade }) {
 
       {prog && (
         <div style={{ display: 'grid', gap: 12 }}>
-          {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n}). Costuma levar de 10 a 40 segundos por cidade.</p>}
+          {!prog.done && <p><b>Varrendo {prog.cidade}…</b> ({prog.i + 1} de {prog.n}){prog.aviso ? ` · ${prog.aviso}` : ''}<br /><span className="muted">Costuma levar de 15 a 40 segundos por cidade. Enquanto isso, jogue:</span></p>}
           <div className={s.prog}><i style={{ width: `${Math.round(((prog.done ? prog.n : prog.i) / prog.n) * 100)}%` }} /></div>
           <ul className={s.resumo}>
-            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios encontrados{r.total ? `, ${r.novos} salvos agora (${r.total - r.novos} já estavam na sua lista)` : '. Tente outros segmentos'}; {r.comTelefone} com telefone, {r.semSite} sem site cadastrado</>}</li>)}
+            {prog.resumo.map((r, i) => <li key={i}>{r.erro ? <span className="err">{r.cidade}: {r.erro}</span> : <><b>{r.cidade}</b>: {r.total} negócios encontrados{r.total ? `, ${r.novos} salvos agora (${r.total - r.novos} já estavam na sua lista)` : '. Tente outros segmentos'}{r.vizinhas ? `, ${r.vizinhas} deles em cidades vizinhas` : ''}; {r.comTelefone} com telefone, {r.semSite} sem site cadastrado</>}</li>)}
           </ul>
+          {!prog.done && <Minigame />}
           {prog.done && <div className="row"><button className="btn" onClick={onClose}>Ver no mapa</button></div>}
         </div>
       )}

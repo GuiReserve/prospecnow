@@ -42,3 +42,19 @@ h1,h2,h3,p{margin:0}
 .modal h2{font-size:20px;letter-spacing:-.02em}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .spacer{flex:1}
+
+/* minigame da espera da varredura */
+.mg{border:1px solid var(--line,#e3e6ea);border-radius:14px;padding:12px;display:grid;gap:8px;user-select:none;-webkit-user-select:none}
+.mg-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:14px}
+.mg-dica{margin:0;font-size:12px;color:#5F6368}
+.mg-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:300px;width:100%;margin:0 auto}
+.mg-cell{position:relative;aspect-ratio:1;border:0;border-radius:12px;cursor:pointer;touch-action:manipulation;
+  background:#EEF3F8 linear-gradient(90deg,transparent 46%,#fff 46%,#fff 54%,transparent 54%),#EEF3F8;padding:0;overflow:hidden}
+.mg-pin{position:absolute;left:50%;top:50%;width:34px;height:34px;margin:-22px 0 0 -17px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+  background:#2F7FD1;box-shadow:0 2px 6px rgba(0,0,0,.25);animation:mgIn .18s ease-out}
+.mg-pin::after{content:'';position:absolute;inset:11px;border-radius:50%;background:#fff}
+.mg-pin.bad{background:#9AA0A6}
+.mg-pop{position:absolute;inset:0;display:grid;place-items:center;font-style:normal;font-weight:800;color:#1E8E3E;animation:mgUp .5s ease-out forwards;pointer-events:none}
+.mg-pop.neg{color:#C5221F}
+@keyframes mgIn{from{transform:rotate(-45deg) scale(.2);opacity:0}to{transform:rotate(-45deg) scale(1);opacity:1}}
+@keyframes mgUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-18px)}}
