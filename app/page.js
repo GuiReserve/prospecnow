@@ -70,7 +70,7 @@ export default function Home() {
 
       <section id="planos" className={s.section}>
         <h2>Planos</h2>
-        <p className="muted">Comece com {SEMANA.dias} dias por R$ {SEMANA.price} ({SEMANA.scans} cidades, pagamento único, não renova). Depois, escolha um plano mensal. Pague por PIX, boleto ou cartão.</p>
+        <p className="muted">Comece com {SEMANA.dias} dias por R$ {SEMANA.price} ({SEMANA.scans} cidades, pagamento único, não renova). Depois, escolha um plano mensal (cartão ou boleto).</p>
         <div className={s.plans}>
           {PAID.map(id => {
             const p = PLANS[id], destaque = id === 'pro';
@@ -94,7 +94,7 @@ export default function Home() {
           <details><summary>De onde vêm os dados?</summary><p>Do OpenStreetMap, o mapa aberto e colaborativo usado por milhares de apps. São dados públicos de empresas. Alguns negócios não têm telefone ou site cadastrado; o ProspecNow mostra primeiro quem tem telefone e deixa um botão para pesquisar o resto.</p></details>
           <details><summary>O ProspecNow manda mensagens sozinho?</summary><p>Não. O botão abre a conversa no seu WhatsApp com o texto pronto, e você decide se envia. Disparo em massa pode bloquear seu número.</p></details>
           <details><summary>Como funciona o começo de {SEMANA.dias} dias?</summary><p>Você paga R$ {SEMANA.price} uma vez e usa o ProspecNow por {SEMANA.dias} dias, com {SEMANA.scans} varreduras de cidade e busca manual à vontade. Não renova sozinho: no fim, você escolhe um plano mensal ou para de usar, e seus contatos continuam salvos.</p></details>
-          <details><summary>Como pago? Posso cancelar?</summary><p>Pelo Asaas, com cartão, PIX ou boleto, todo mês. Você cancela quando quiser na página de planos e continua usando até o fim do mês já pago.</p></details>
+          <details><summary>Como pago? Posso cancelar?</summary><p>Pelo Asaas. Os {SEMANA.dias} dias se pagam por PIX, boleto ou cartão; os planos mensais, por cartão ou boleto, todo mês. Você cancela quando quiser na página de planos e continua usando até o fim do mês já pago.</p></details>
           <details><summary>Meus contatos ficam salvos?</summary><p>Sim, na sua conta. Você abre de qualquer computador ou celular e ainda pode baixar uma planilha com todos eles.</p></details>
           <details><summary>E a LGPD?</summary><p>Usamos dados públicos de empresas para contato comercial. Qualquer negócio pode pedir para sair da lista pelo e-mail indicado na política de privacidade.</p></details>
         </div>

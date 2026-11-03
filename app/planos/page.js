@@ -80,7 +80,7 @@ export default function Planos() {
           );
         })}
       </div>
-      <p className={s.small}>Pagamento pelo Asaas, com cartão, PIX ou boleto. Cancele quando quiser.</p>
+      <p className={s.small}>Planos mensais pelo Asaas, com cartão ou boleto. Cancele quando quiser.</p>
 
       {esc && (
         <div className="modal-bg" onMouseDown={e => e.target === e.currentTarget && !busy && setEsc(null)}>
