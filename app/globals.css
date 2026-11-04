@@ -60,9 +60,9 @@ h1,h2,h3,p{margin:0}
 @keyframes mgUp{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-18px)}}
 
 /* vídeo de apresentação no canto da landing */
-.vc{position:fixed;right:16px;bottom:16px;width:min(240px,46vw);aspect-ratio:9/16;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(11,15,20,.28);z-index:50;cursor:pointer;background:#0F2A47;transition:all .25s ease}
+.vc{position:fixed;right:16px;bottom:16px;width:min(170px,40vw);aspect-ratio:9/16;border-radius:16px;overflow:hidden;box-shadow:0 12px 32px rgba(11,15,20,.28);z-index:50;cursor:pointer;background:#0F2A47;transition:all .25s ease}
 .vc video{width:100%;height:100%;object-fit:cover;display:block}
-.vc-play{position:absolute;left:8px;right:8px;bottom:8px;background:rgba(0,0,0,.6);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:6px 10px;text-align:center}
+.vc-play{position:absolute;left:6px;right:6px;bottom:6px;background:rgba(47,127,209,.95);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:6px 10px;text-align:center}
 .vc-x{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:0;background:rgba(0,0,0,.55);color:#fff;font-size:18px;line-height:1;cursor:pointer}
-.vc-g{right:50%;bottom:50%;transform:translate(50%,50%);width:min(420px,92vw);cursor:default;z-index:60}
-@media (max-width:520px){.vc{width:120px;right:12px;bottom:12px}}
+.vc-g{right:50%;bottom:50%;transform:translate(50%,50%);width:min(400px,90vw,calc(86vh * 9 / 16));cursor:default;z-index:60;box-shadow:0 0 0 100vmax rgba(11,15,20,.62),0 20px 50px rgba(0,0,0,.4)}
+@media (max-width:520px){.vc{width:110px;right:12px;bottom:12px}}

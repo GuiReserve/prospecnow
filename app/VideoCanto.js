@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Vídeo de apresentação no canto da landing. Começa mudo e pequeno; um toque abre grande com som.
-export const VIDEO = { src: '', poster: '' };   // preenchido quando o vídeo estiver pronto
+export const VIDEO = { src: '/video/apresentacao.mp4', webm: '/video/apresentacao.webm', poster: '/video/apresentacao.jpg' };
 
 export default function VideoCanto() {
   const [fechado, setFechado] = useState(false);
@@ -23,8 +23,11 @@ export default function VideoCanto() {
   }
   return (
     <div className={'vc' + (grande ? ' vc-g' : '')} onClick={grande ? undefined : abrir} role={grande ? 'dialog' : 'button'} aria-label="Vídeo de apresentação do ProspecNow">
-      <video ref={v} src={VIDEO.src} poster={VIDEO.poster || undefined} muted loop autoPlay playsInline controls={grande} preload="metadata" />
-      {!grande && <span className="vc-play">▶ Ver com som · 50 s</span>}
+      <video ref={v} poster={VIDEO.poster || undefined} muted loop autoPlay playsInline controls={grande} preload="metadata">
+        <source src={VIDEO.webm} type="video/webm" />
+        <source src={VIDEO.src} type="video/mp4" />
+      </video>
+      {!grande && <span className="vc-play">▶ Ver com som</span>}
       <button type="button" className="vc-x" onClick={fechar} aria-label={grande ? 'Diminuir vídeo' : 'Fechar vídeo'}>×</button>
     </div>
   );
