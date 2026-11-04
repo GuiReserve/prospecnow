@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { seq, stepIdx, STEP, STATUS, fillTemplate, today, updateLead, deleteLead, safeUrl } from '@/lib/client';
 import s from './app.module.css';
+import { langOf, textoDaEtapa, servicoNoIdioma, LANGS } from '@/lib/plans';
 
 const SEGC = ['#2F7FD1', '#1E9E5A', '#D98E0B', '#2E8C8C', '#4F79A8', '#6E9A34', '#C2703A', '#5C6BB8', '#3E8E6B', '#A06A2C'];
 function hash(t) { let h = 0; for (const c of String(t)) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); }
@@ -22,11 +23,12 @@ export default function Panel({ lead, info, settings, onClose, onChange, onRemov
   const step = stepIdx(r);
   const closed = ['fechou', 'nao', 'fim', 'conv'].includes(sq.k);
   const nome = info?.nome || `${r.segmento || 'Negócio'} em ${r.cidade || ''}`;
-  const base = fillTemplate(settings['m' + step], { nome: info?.nome || '', segmento: r.segmento, cidade: r.cidade, link: settings.link, meu_nome: settings.meu_nome, servico: settings.servico });
+  const lang = langOf(r.pais);   // a mensagem sai no idioma do país do negócio
+  const base = fillTemplate(textoDaEtapa(settings, lang, step), { nome: info?.nome || '', segmento: r.segmento, cidade: r.cidade, link: settings.link, meu_nome: settings.meu_nome, servico: servicoNoIdioma(settings, lang) });
   const [msg, setMsg] = useState(base);
   const [nota, setNota] = useState(r.note || '');
 
-  useEffect(() => { setMsg(base); setNota(r.note || ''); }, [r.id, step, info?.nome]); // eslint-disable-line
+  useEffect(() => { setMsg(base); setNota(r.note || ''); }, [r.id, step, info?.nome, lang]); // eslint-disable-line
 
   const wa = /^\d{8,15}$/.test(info?.digits || '') ? `https://wa.me/${info.digits}?text=${encodeURIComponent(msg)}` : '';
   const rota = r.lat != null ? `https://www.google.com/maps/dir/?api=1&destination=${Number(r.lat)},${Number(r.lng)}` : '';
@@ -105,7 +107,7 @@ export default function Panel({ lead, info, settings, onClose, onChange, onRemov
 
         <div className={s.sec}>
           <h3>{STEP[step]}</h3>
-          <p className={s.h}>{nxt} Você pode editar antes de enviar.</p>
+          <p className={s.h}>{nxt} Você pode editar antes de enviar.{lang !== 'pt-BR' && <> Mensagem em <b>{LANGS[lang].toLowerCase()}</b>, pelo país do negócio.</>}</p>
           {(!settings.meu_nome || !settings.servico) && <p className={s.cfg}>Coloque seu nome, o que você oferece e o link do seu trabalho em <button type="button" onClick={onSettings}>Mensagens</button> para a mensagem sair completa.</p>}
           <textarea value={msg} onChange={e => setMsg(e.target.value)} aria-label="Mensagem" />
           <div className="row" style={{ marginTop: 8 }}>

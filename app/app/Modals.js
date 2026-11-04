@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { saveSettings, usarVarredura } from '@/lib/client';
 import { scanCity, planArea, searchPlaces } from '@/lib/osm';
-import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS } from '@/lib/plans';
+import { SEGMENTOS_BR, SEGMENTOS_PT, MAX_SEGMENTS, DEFAULT_SETTINGS, LANGS, MSG_DEFAULTS } from '@/lib/plans';
 import s from './app.module.css';
 import Minigame from './Minigame';
 
@@ -197,7 +197,8 @@ export function AddModal({ acc, onClose, onAdded, onUpgrade }) {
 
 /* ---------------- Configurações ---------------- */
 export function SettingsModal({ settings, onClose, onSaved }) {
-  const [v, setV] = useState({ ...DEFAULT_SETTINGS, ...settings });
+  const [v, setV] = useState({ ...DEFAULT_SETTINGS, ...settings, msgs: { ...(settings.msgs || {}) } });
+  const [lang, setLang] = useState('pt-BR');
   const [ok, setOk] = useState(''); const [err, setErr] = useState('');
   async function save(e) {
     e.preventDefault(); setErr(''); setOk('');
@@ -205,6 +206,14 @@ export function SettingsModal({ settings, onClose, onSaved }) {
     try { await saveSettings(v); onSaved(v); setOk('Salvo.'); } catch (e2) { setErr(e2.message); }
   }
   const f = (k) => ({ value: v[k], onChange: e => setV({ ...v, [k]: e.target.value }) });
+  // textos do idioma escolhido: português do Brasil fica nos campos de sempre; os outros, em msgs[idioma]
+  const get = k => lang === 'pt-BR' ? v[k] : (v.msgs[lang]?.[k] ?? (k === 'servico' ? '' : MSG_DEFAULTS[lang][k]));
+  const set = (k, val) => lang === 'pt-BR' ? setV({ ...v, [k]: val }) : setV({ ...v, msgs: { ...v.msgs, [lang]: { ...MSG_DEFAULTS[lang], ...(v.msgs[lang] || {}), [k]: val } } });
+  const t = k => ({ value: get(k), onChange: e => set(k, e.target.value) });
+  function original() {
+    if (lang === 'pt-BR') setV({ ...DEFAULT_SETTINGS, meu_nome: v.meu_nome, link: v.link, servico: v.servico, msgs: v.msgs });
+    else { const m = { ...v.msgs }; const sv = m[lang]?.servico; m[lang] = sv ? { servico: sv } : undefined; setV({ ...v, msgs: m }); }
+  }
   return (
     <Modal title="Suas mensagens" onClose={onClose} wide>
       <form onSubmit={save} style={{ display: 'grid', gap: 12 }}>
@@ -212,13 +221,18 @@ export function SettingsModal({ settings, onClose, onSaved }) {
           <div className="field"><label htmlFor="mn">Seu nome</label><input id="mn" {...f('meu_nome')} placeholder="Ex.: Guilherme Torres" /></div>
           <div className="field"><label htmlFor="ml">Link do seu trabalho</label><input id="ml" {...f('link')} placeholder="https://... (portfólio, Instagram)" /></div>
         </div>
-        <div className="field"><label htmlFor="sv">O que você oferece</label><input id="sv" {...f('servico')} placeholder="Ex.: criação de sites, gestão de Instagram, tráfego pago, fotografia" /></div>
+        <div className="field">
+          <label htmlFor="lg">Idioma</label>
+          <select id="lg" value={lang} onChange={e => setLang(e.target.value)}>{Object.entries(LANGS).map(([k, n]) => <option key={k} value={k}>{n}</option>)}</select>
+          <p className={s.h}>Cada contato recebe a mensagem no idioma do país dele: Brasil em português do Brasil, Portugal em português de Portugal, países de língua espanhola em espanhol e os demais em inglês.</p>
+        </div>
+        <div className="field"><label htmlFor="sv">O que você oferece{lang !== 'pt-BR' ? ` (em ${LANGS[lang].toLowerCase()})` : ''}</label><input id="sv" {...t('servico')} placeholder={lang === 'pt-BR' ? 'Ex.: criação de sites, gestão de Instagram, rastreamento de frotas' : lang === 'es' ? 'Ej.: diseño de sitios web' : lang === 'en' ? 'E.g.: website design' : 'Ex.: criação de sites'} /></div>
         <p className={s.h}>Use {'{nome}'}, {'{segmento}'}, {'{cidade}'}, {'{link}'}, {'{meu_nome}'} e {'{servico}'}. O 1º acompanhamento sai 4 dias depois do primeiro contato, e o último, 7 dias depois do segundo.</p>
-        <div className="field"><label htmlFor="m0">Primeiro contato</label><textarea id="m0" {...f('m0')} /></div>
-        <div className="field"><label htmlFor="m1">1º acompanhamento</label><textarea id="m1" {...f('m1')} /></div>
-        <div className="field"><label htmlFor="m2">Último acompanhamento</label><textarea id="m2" {...f('m2')} /></div>
+        <div className="field"><label htmlFor="m0">Primeiro contato</label><textarea id="m0" {...t('m0')} /></div>
+        <div className="field"><label htmlFor="m1">1º acompanhamento</label><textarea id="m1" {...t('m1')} /></div>
+        <div className="field"><label htmlFor="m2">Último acompanhamento</label><textarea id="m2" {...t('m2')} /></div>
         {err && <p className="err">{err}</p>}{ok && <p className="okmsg">{ok}</p>}
-        <div className="row"><button className="btn">Salvar</button><button type="button" className="btn ghost" onClick={() => setV({ ...DEFAULT_SETTINGS, meu_nome: v.meu_nome, link: v.link, servico: v.servico })}>Voltar aos textos originais</button></div>
+        <div className="row"><button className="btn">Salvar</button><button type="button" className="btn ghost" onClick={original}>Voltar aos textos originais deste idioma</button></div>
       </form>
     </Modal>
   );
